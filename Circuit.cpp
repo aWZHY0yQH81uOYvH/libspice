@@ -1,5 +1,8 @@
 #include "Circuit.hpp"
 
+#include <stdexcept>
+#include <map>
+
 Node *Circuit::add_node() {
 	gen_matrix_pend = true;
 	Node *n = new Node{this};
@@ -51,6 +54,11 @@ double Circuit::eval_expr(const Expression &e) {
 		// Numerator and denominator pointers may be NULL
 		double num = t.num ? *t.num : 1;
 		double den = t.den ? *t.den : 1;
+		
+		// Check for divide by zero
+		if(den == 0)
+			throw std::invalid_argument("Division by zero");
+		
 		ret += t.coeff * num / den;
 	}
 	return ret;
@@ -59,26 +67,56 @@ double Circuit::eval_expr(const Expression &e) {
 void Circuit::gen_matrix() {
 	reset();
 	
+	// Make sure all components are connected properly
+	for(std::unique_ptr<Component> &c:components)
+		if(!c->fully_connected())
+			throw std::runtime_error("Components not fully connected");
+	
+	// Figure out how many variables we have
+	size_t n_nodes = nodes.size();
+	n_vars = n_nodes;
+	
+	// Set the index in each node so going from node pointer to index is faster
+	// Also create map of the pointers to each node's voltage to the node index
+	// for faster association from within components' returned expressions
+	node_map.clear();
+	for(size_t ind=0; ind<n_nodes; ind++) {
+		nodes[ind]->ind = ind;
+		node_map.emplace(&nodes[ind]->v, ind);
+	}
+	
+	// Count how many voltage sources there are and create an index of them
+	// Each voltage source will get an additional variable that represents
+	// the current through it
+	vsource_map.clear();
+	for(auto &c:components)
+		if(c->v_expr().size())
+			vsource_map.emplace(c.get(), n_vars++);
+	
 	// Resize everything
 	expr_mat.clear();
 	expr_vec.clear();
-	expr_mat.resize(nodes.size());
-	expr_vec.resize(nodes.size());
+	expr_mat.resize(n_vars);
+	expr_vec.resize(n_vars);
 	for(auto &v:expr_mat)
-		v.resize(nodes.size());
+		v.resize(n_vars);
 	
-	eval_mat.resize(nodes.size(), nodes.size());
-	eval_vec = Eigen::VectorXd(nodes.size());
-	node_voltage_vec = Eigen::VectorXd(nodes.size());
+	eval_mat.resize(n_vars, n_vars);
+	eval_vec = Eigen::VectorXd(n_vars);
+	solved_vec = Eigen::VectorXd(n_vars);
 	
-	// Each row and column correspond to a node
-	for(size_t node_ind=0; node_ind<nodes.size(); node_ind++) {
+	// TODO: separate alloc_matrix from gen_matrix to enable faster
+	// term expression regeneration for highly nonlinear elements like
+	// MOSFETs
+	
+	// The first rows and columns correspond to nodes
+	for(size_t node_ind=0; node_ind<n_nodes; node_ind++) {
 		std::unique_ptr<Node> &n = nodes[node_ind];
 		
 		// Node is fixed to a voltage
 		if(n->fixed) {
 			// 1 * node voltage = fixed value
-			expr_mat[node_ind][node_ind].push_back({1, NULL, NULL});
+			expr_mat[node_ind][node_ind].push_back({1.0, NULL, NULL});
 			expr_vec[node_ind].push_back({n->v, NULL, NULL});
 		}
 		
@@ -93,22 +131,17 @@ void Circuit::gen_matrix() {
 					for(Term &t:ie)
 						t.coeff *= -1;
 				
-				// Find which node each term of the current expression references, if any
+				// Find which node each term of the current expression numerator references, if any
 				for(Term &t:ie) {
-					ssize_t ref_node = -1;
-					for(size_t x=0; x<nodes.size(); x++)
-						if(t.num == &nodes[x]->v) {
-							ref_node = x;
-							break;
-						}
+					auto search_result = node_map.find(t.num);
 					
-					// Add term to the necessary position in the matrix
-					if(ref_node >= 0) {
+					// Add term to the necessary position in the matrix if there is a reference
+					if(search_result != node_map.end()) {
 						// Remove the reference to the node from the term since
 						// the matrix multiplication will include it automatically
 						t.num = NULL;
 						
-						expr_mat[node_ind][ref_node].push_back(t);
+						expr_mat[node_ind][search_result->second].push_back(t);
 					}
 					
 					// If it's a constant, put it in expr_vec
@@ -123,12 +156,33 @@ void Circuit::gen_matrix() {
 		}
 	}
 	
+	// Rest of the rows and cols correspond to the voltage-defined components
+	for(auto vi:vsource_map) {
+		Component *vsource = vi.first;
+		size_t extra_var_ind = vi.second;
+		
+		// Add 1 * current variables to connected nodes
+		// but only if they aren't already a fixed voltage
+		// (since equations for the fixed ones aren't KCL equations anymore)
+		if(!vsource->node_top   ->fixed)
+			expr_mat[vsource->node_top   ->ind][extra_var_ind].push_back({-1.0, NULL, NULL});
+		
+		if(!vsource->node_bottom->fixed)
+			expr_mat[vsource->node_bottom->ind][extra_var_ind].push_back({ 1.0, NULL, NULL});
+		
+		// Create extra equation defining the forced voltage difference
+		// Node voltage at the negative side should have negative sign
+		expr_mat[extra_var_ind][vsource->node_top   ->ind].push_back({ 1.0, NULL, NULL});
+		expr_mat[extra_var_ind][vsource->node_bottom->ind].push_back({-1.0, NULL, NULL});
+		expr_vec[extra_var_ind] = vsource->v_expr();
+	}
+	
 	gen_matrix_pend = false;
 	
 	// Check if any of the components are dynamic and need to constantly update the circuit matrix
 	update_matrix_pend = ONCE;
 	for(auto &c:components)
-		if(c->dynamic) {
+		if(c->is_dynamic()) {
 			update_matrix_pend = ALWAYS;
 			break;
 		}
@@ -138,20 +192,23 @@ void Circuit::update_matrix() {
 	// Evaluate the circuit definition matrix with current parameters
 	// and convert to Eigen form
 	
-	for(size_t row=0; row<nodes.size(); row++)
-		for(size_t col=0; col<nodes.size(); col++) {
+	eval_mat.setZero();
+	for(size_t row=0; row<n_vars; row++)
+		for(size_t col=0; col<n_vars; col++) {
 			double value = eval_expr(expr_mat[row][col]);
 			if(value)
 				eval_mat.insert(row, col) = value;
 		}
 	
-	for(size_t row=0; row<nodes.size(); row++)
+	for(size_t row=0; row<n_vars; row++)
 		eval_vec[row] = eval_expr(expr_vec[row]);
 	
 	// Prepare the solver
 	eval_mat.makeCompressed();
 	mat_solver.analyzePattern(eval_mat);
 	mat_solver.factorize(eval_mat);
+	if(mat_solver.info() != Eigen::Success)
+		throw std::runtime_error("SparseLU factorize: " + mat_solver.lastErrorMessage());
 	
 	if(update_matrix_pend == ONCE)
 		update_matrix_pend = NEVER;
@@ -165,9 +222,26 @@ void Circuit::sim_to_time(double stop) {
 		update_matrix();
 	
 	// Solve the circuit matrix to get all node voltages
-	node_voltage_vec = mat_solver.solve(eval_vec);
+	solved_vec = mat_solver.solve(eval_vec);
+	if(mat_solver.info() != Eigen::Success)
+		throw std::runtime_error("SparseLU solve: " + mat_solver.lastErrorMessage());
 	
 	// Update node object voltages
 	for(size_t ind=0; ind<nodes.size(); ind++)
-		nodes[ind]->v = node_voltage_vec[ind];
+		nodes[ind]->v = solved_vec[ind];
+	
+	// Update component object voltages and currents
+	for(auto &c:components) {
+		c->v = c->node_top->v - c->node_bottom->v;
+		
+		// Voltage-defined component has its own current var
+		if(c->v_expr().size())
+			c->i = solved_vec[vsource_map.find(c.get())->second];
+		
+		// Otherwise evaluate the current expression
+		else
+			c->i = eval_expr(c->i_expr());
+	}
+	
+	// TODO: only compute updates when needed for saving or when exiting this function
 }

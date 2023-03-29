@@ -16,6 +16,9 @@ private:
 	// Circuit we're part of
 	Circuit *parent_circuit;
 	
+	// Index in parent circuit's array
+	size_t ind;
+	
 	// For nodes to be kept at a constant voltage
 	bool fixed;
 	

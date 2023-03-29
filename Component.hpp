@@ -13,10 +13,11 @@ class Circuit;
 
 // A "term" can hold a multiplier and references to a
 // fractional component. All are multiplied together.
+// TODO: change to having a vector for num and den for more complex terms?
 typedef struct {
 	double coeff;
-	double *num;
-	double *den;
+	const double *num;
+	const double *den;
 } Term;
 
 // Sum of multiple terms
@@ -24,13 +25,18 @@ typedef std::vector<Term> Expression;
 
 class Component {
 protected:
+	// Circuit that we're part of
 	Circuit *parent_circuit;
+	
+	// Nodes that we're connected to
 	Node *node_top = NULL;
 	Node *node_bottom = NULL;
+	
+	// Generic value for simple component types
 	double value;
 	
-	// Set to true to force re-evaluation of the component current parameters at every timestep
-	bool dynamic = false;
+	// Return true to force re-evaluation of the component expressions at every timestep
+	virtual bool is_dynamic();
 	
 	// Return expressions representing the voltage and current across/through this component
 	virtual Expression v_expr();
@@ -46,10 +52,13 @@ protected:
 	void save_hist();
 	
 	Component(Circuit *parent, double value);
-	// TODO: add constructor with each node specified
+	Component(Circuit *parent, double value, Node *top, Node *bottom);
 	
 public:
 	virtual ~Component() {}
+	
+	// Check if both ends of the component are connected
+	bool fully_connected();
 	
 	// Update value (i.e. resistance, capacitance)
 	void set_value(double v);
@@ -62,10 +71,12 @@ public:
 	// Current voltage and current values
 	double voltage();
 	double current();
+	double power();
 	
 	// Connecting to a node
 	Node *to(Node *n);
 	Component *to(Component *c);
+	void flip();
 	
 	friend class Circuit;
 	friend class Node;

@@ -17,6 +17,7 @@
 #include "Component.hpp"
 
 #include "Resistor.hpp"
+#include "VSource.hpp"
 #include "ISource.hpp"
 
 class Circuit {
@@ -30,6 +31,13 @@ private:
 	// Circuit representation
 	std::vector<std::vector<Expression>> expr_mat;
 	std::vector<Expression> expr_vec;
+	size_t n_vars;
+	
+	// Map of variable indicies that correspond to voltage sources
+	std::map<Component*, size_t> vsource_map;
+	
+	// Map of node voltage pointers to node indicies
+	std::map<const double*, size_t> node_map;
 	
 	// Evaluate expressions used in circuit representation
 	static double eval_expr(const Expression &e);
@@ -37,7 +45,7 @@ private:
 	// Evaluated circuit representation matrix
 	Eigen::SparseMatrix<double> eval_mat;
 	Eigen::VectorXd eval_vec;
-	Eigen::VectorXd node_voltage_vec;
+	Eigen::VectorXd solved_vec;
 	
 	// Eigen solver
 	Eigen::SparseLU<Eigen::SparseMatrix<double>> mat_solver;

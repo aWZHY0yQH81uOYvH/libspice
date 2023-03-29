@@ -1,4 +1,4 @@
-SOURCES=test.cpp Circuit.cpp Node.cpp Component.cpp Resistor.cpp ISource.cpp
+SOURCES=test.cpp Circuit.cpp Node.cpp Component.cpp Resistor.cpp ISource.cpp VSource.cpp
 
 OBJS=$(SOURCES:%.cpp=build/%.o)
 

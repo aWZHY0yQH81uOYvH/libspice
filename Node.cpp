@@ -1,7 +1,7 @@
-#include <stdexcept>
-
 #include "Node.hpp"
 #include "Circuit.hpp"
+
+#include <stdexcept>
 
 Node::Node(Circuit *c): parent_circuit(c), fixed(false) {}
 
