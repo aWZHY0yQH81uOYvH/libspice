@@ -1,4 +1,6 @@
 #include "Circuit.hpp"
+#include "Node.hpp"
+#include "Component.hpp"
 
 #include <stdexcept>
 #include <map>

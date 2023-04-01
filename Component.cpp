@@ -1,5 +1,6 @@
 #include "Component.hpp"
 #include "Circuit.hpp"
+#include "Node.hpp"
 
 #include <stdexcept>
 

@@ -13,12 +13,19 @@
 #include <Eigen/Sparse>
 #include <Eigen/SparseLU>
 
-#include "Node.hpp"
-#include "Component.hpp"
+class Node;
+class Component;
 
-#include "Resistor.hpp"
-#include "VSource.hpp"
-#include "ISource.hpp"
+// A "term" can hold a multiplier and references to a
+// fractional component. All are multiplied together.
+typedef struct {
+	double coeff;
+	std::vector<const double *> num;
+	std::vector<const double *> den;
+} Term;
+
+// Sum of multiple terms
+typedef std::vector<Term> Expression;
 
 class Circuit {
 private:
@@ -58,9 +65,6 @@ private:
 		ALWAYS
 	} update_matrix_pend = ONCE;
 	
-	// Timestep (dynamic)
-	double ts;
-	
 	// Time
 	double t;
 	
@@ -72,6 +76,7 @@ public:
 	// Create new components
 	// (define here so templates can be created on demand)
 	template<typename T, typename... Args> T *add_comp(Args&&... args) {
+		gen_matrix_pend = true;
 		T *c = new T(this, std::forward<Args>(args)...);
 		components.emplace_back(c);
 		return c;
@@ -95,6 +100,10 @@ public:
 	
 	// Simulate
 	void sim_to_time(double stop);
+	
+	// Timestep (dynamic)
+	// TODO: figure out how to make private or read only?
+	double dt;
 	
 	friend class Node;
 	friend class Component;

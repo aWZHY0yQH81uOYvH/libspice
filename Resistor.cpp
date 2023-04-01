@@ -1,4 +1,5 @@
 #include "Resistor.hpp"
+#include "Node.hpp"
 
 Expression Resistor::i_expr() {
 	// I = (Vtop - Vbottom)/R

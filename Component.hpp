@@ -7,20 +7,9 @@
 
 #include <vector>
 
-#include "Node.hpp"
+#include "Circuit.hpp"
 
-class Circuit;
-
-// A "term" can hold a multiplier and references to a
-// fractional component. All are multiplied together.
-typedef struct {
-	double coeff;
-	std::vector<const double *> num;
-	std::vector<const double *> den;
-} Term;
-
-// Sum of multiple terms
-typedef std::vector<Term> Expression;
+class Node;
 
 class Component {
 protected:
