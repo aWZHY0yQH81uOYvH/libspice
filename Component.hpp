@@ -13,11 +13,10 @@ class Circuit;
 
 // A "term" can hold a multiplier and references to a
 // fractional component. All are multiplied together.
-// TODO: change to having a vector for num and den for more complex terms?
 typedef struct {
 	double coeff;
-	const double *num;
-	const double *den;
+	std::vector<const double *> num;
+	std::vector<const double *> den;
 } Term;
 
 // Sum of multiple terms

@@ -51,9 +51,14 @@ double Circuit::time() {
 double Circuit::eval_expr(const Expression &e) {
 	double ret = 0;
 	for(const Term &t:e) {
-		// Numerator and denominator pointers may be NULL
-		double num = t.num ? *t.num : 1;
-		double den = t.den ? *t.den : 1;
+		double num = 1;
+		double den = 1;
+		
+		for(const double *n:t.num)
+			num *= *n;
+		
+		for(const double *d:t.den)
+			den *= *d;
 		
 		// Check for divide by zero
 		if(den == 0)
@@ -94,6 +99,7 @@ void Circuit::gen_matrix() {
 			vsource_map.emplace(c.get(), n_vars++);
 	
 	// Resize everything
+	// TODO: make expression matrix sparse (use std::map?)
 	expr_mat.clear();
 	expr_vec.clear();
 	expr_mat.resize(n_vars);
@@ -108,6 +114,9 @@ void Circuit::gen_matrix() {
 	// TODO: separate alloc_matrix from gen_matrix to enable faster
 	// term expression regeneration for highly nonlinear elements like
 	// MOSFETs
+	// Store each term in the expression matrix as a pair with component pointer (or just dynamic flag since they'd all need to be re-done?)
+	// and term, and keep a list of "dynamic" components so the ones that need to be
+	// updated can quickly be removed and updated instead of re-doing the entire thing
 	
 	// The first rows and columns correspond to nodes
 	for(size_t node_ind=0; node_ind<n_nodes; node_ind++) {
@@ -116,8 +125,8 @@ void Circuit::gen_matrix() {
 		// Node is fixed to a voltage
 		if(n->fixed) {
 			// 1 * node voltage = fixed value
-			expr_mat[node_ind][node_ind].push_back({1.0, NULL, NULL});
-			expr_vec[node_ind].push_back({n->v, NULL, NULL});
+			expr_mat[node_ind][node_ind].push_back({1.0, {}, {}});
+			expr_vec[node_ind].push_back({n->v, {}, {}});
 		}
 		
 		// Node is free to move; add currents to do KCL
@@ -133,19 +142,21 @@ void Circuit::gen_matrix() {
 				
 				// Find which node each term of the current expression numerator references, if any
 				for(Term &t:ie) {
-					auto search_result = node_map.find(t.num);
+					auto search_result = node_map.end();
 					
-					// Add term to the necessary position in the matrix if there is a reference
-					if(search_result != node_map.end()) {
-						// Remove the reference to the node from the term since
-						// the matrix multiplication will include it automatically
-						t.num = NULL;
-						
-						expr_mat[node_ind][search_result->second].push_back(t);
-					}
+					// Iterate through all numerator parts
+					for(auto num = t.num.begin(); num != t.num.end(); num++)
+						// Add term to the necessary position in the matrix if there is a reference
+						if((search_result = node_map.find(*num)) != node_map.end()) {
+							// Remove the reference to the node from the term since
+							// the matrix multiplication will include it automatically
+							t.num.erase(num);
+							expr_mat[node_ind][search_result->second].push_back(t);
+							break;
+						}
 					
 					// If it's a constant, put it in expr_vec
-					else {
+					if(search_result == node_map.end()) {
 						// Coefficient must be inverted since the KCL term is moved
 						// to the opposite side of the equation
 						t.coeff *= -1;
@@ -165,15 +176,15 @@ void Circuit::gen_matrix() {
 		// but only if they aren't already a fixed voltage
 		// (since equations for the fixed ones aren't KCL equations anymore)
 		if(!vsource->node_top   ->fixed)
-			expr_mat[vsource->node_top   ->ind][extra_var_ind].push_back({-1.0, NULL, NULL});
+			expr_mat[vsource->node_top   ->ind][extra_var_ind].push_back({-1.0, {}, {}});
 		
 		if(!vsource->node_bottom->fixed)
-			expr_mat[vsource->node_bottom->ind][extra_var_ind].push_back({ 1.0, NULL, NULL});
+			expr_mat[vsource->node_bottom->ind][extra_var_ind].push_back({ 1.0, {}, {}});
 		
 		// Create extra equation defining the forced voltage difference
 		// Node voltage at the negative side should have negative sign
-		expr_mat[extra_var_ind][vsource->node_top   ->ind].push_back({ 1.0, NULL, NULL});
-		expr_mat[extra_var_ind][vsource->node_bottom->ind].push_back({-1.0, NULL, NULL});
+		expr_mat[extra_var_ind][vsource->node_top   ->ind].push_back({ 1.0, {}, {}});
+		expr_mat[extra_var_ind][vsource->node_bottom->ind].push_back({-1.0, {}, {}});
 		expr_vec[extra_var_ind] = vsource->v_expr();
 	}
 	
