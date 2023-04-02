@@ -90,6 +90,15 @@ double Circuit::eval_expr(const Expression &e) {
 	return ret;
 }
 
+// Return an expression object from the expression matrix
+// Since it's a sparse matrix, it may need to be created
+Expression &Circuit::expr_mat_helper(size_t row, size_t col) {
+	auto coord = std::pair<size_t, size_t>(row, col);
+	auto search_result = expr_mat.find(coord);
+	if(search_result != expr_mat.end()) return search_result->second;
+	return expr_mat.emplace(std::move(coord), Expression{}).first->second;
+}
+
 // Floor function that handles floating point imprecision
 long Circuit::epsilon_floor(double x) {
 	long normal_floor = x;
@@ -166,14 +175,10 @@ void Circuit::gen_matrix() {
 		if(c->v_expr().size())
 			vsource_map.emplace(c.get(), n_vars++);
 	
-	// Resize everything
-	// TODO: make expression matrix sparse (use std::map?)
+	// Clear and resize circuit representation
 	expr_mat.clear();
 	expr_vec.clear();
-	expr_mat.resize(n_vars);
 	expr_vec.resize(n_vars);
-	for(auto &v:expr_mat)
-		v.resize(n_vars);
 	
 	eval_mat.resize(n_vars, n_vars);
 	eval_vec = Eigen::VectorXd(n_vars);
@@ -238,7 +243,7 @@ void Circuit::gen_matrix() {
 		// Node is fixed to a voltage
 		if(n->fixed) {
 			// 1 * node voltage = fixed value
-			expr_mat[node_ind][node_ind].push_back({1.0, {}, {}});
+			expr_mat_helper(node_ind, node_ind).push_back({1.0, {}, {}});
 			expr_vec[node_ind].push_back({*n->v, {}, {}});
 		}
 		
@@ -264,7 +269,7 @@ void Circuit::gen_matrix() {
 							// Remove the reference to the node from the term since
 							// the matrix multiplication will include it automatically
 							t.num.erase(num);
-							expr_mat[node_ind][search_result->second].push_back(t);
+							expr_mat_helper(node_ind, search_result->second).push_back(t);
 							break;
 						}
 					
@@ -289,15 +294,15 @@ void Circuit::gen_matrix() {
 		// but only if they aren't already a fixed voltage
 		// (since equations for the fixed ones aren't KCL equations anymore)
 		if(!vsource->node_top   ->fixed)
-			expr_mat[vsource->node_top   ->ind][extra_var_ind].push_back({-1.0, {}, {}});
+			expr_mat_helper(vsource->node_top   ->ind, extra_var_ind).push_back({-1.0, {}, {}});
 		
 		if(!vsource->node_bottom->fixed)
-			expr_mat[vsource->node_bottom->ind][extra_var_ind].push_back({ 1.0, {}, {}});
+			expr_mat_helper(vsource->node_bottom->ind, extra_var_ind).push_back({ 1.0, {}, {}});
 		
 		// Create extra equation defining the forced voltage difference
 		// Node voltage at the negative side should have negative sign
-		expr_mat[extra_var_ind][vsource->node_top   ->ind].push_back({ 1.0, {}, {}});
-		expr_mat[extra_var_ind][vsource->node_bottom->ind].push_back({-1.0, {}, {}});
+		expr_mat_helper(extra_var_ind, vsource->node_top   ->ind).push_back({ 1.0, {}, {}});
+		expr_mat_helper(extra_var_ind, vsource->node_bottom->ind).push_back({-1.0, {}, {}});
 		expr_vec[extra_var_ind] = vsource->v_expr();
 	}
 	
@@ -319,12 +324,8 @@ void Circuit::update_matrix() {
 	// TODO: only update the necessary parts of matrix
 	
 	eval_mat.setZero();
-	for(size_t row=0; row<n_vars; row++)
-		for(size_t col=0; col<n_vars; col++) {
-			double value = eval_expr(expr_mat[row][col]);
-			if(value)
-				eval_mat.insert(row, col) = value;
-		}
+	for(auto &expr:expr_mat)
+		eval_mat.insert(expr.first.first, expr.first.second) = eval_expr(expr.second);
 	
 	for(size_t row=0; row<n_vars; row++)
 		eval_vec[row] = eval_expr(expr_vec[row]);

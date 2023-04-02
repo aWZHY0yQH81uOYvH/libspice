@@ -39,7 +39,9 @@ private:
 	std::vector<std::unique_ptr<Component>> components;
 	
 	// Circuit representation
-	std::vector<std::vector<Expression>> expr_mat;
+	// expr_mat is sparse so needs a helper function for easy access
+	std::map<std::pair<size_t, size_t>, Expression> expr_mat;
+	Expression &expr_mat_helper(size_t row, size_t col);
 	std::vector<Expression> expr_vec;
 	size_t n_vars;
 	
