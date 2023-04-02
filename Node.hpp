@@ -27,7 +27,6 @@ private:
 	
 	// Voltage history
 	std::vector<double> _v_hist;
-	void save_hist();
 	
 	// Disconnected node
 	Node(Circuit *c);
@@ -38,7 +37,8 @@ private:
 public:
 	// Voltage history
 	const std::vector<double> &v_hist();
-	bool save = false;
+	void save_hist();
+	bool auto_save = false;
 	
 	// Current voltage
 	double v; // TODO: find a way to make this private? needs to be public for component derived classes

@@ -13,8 +13,11 @@
 #include <Eigen/Sparse>
 #include <Eigen/SparseLU>
 
+#include <gsl/gsl_odeiv2.h>
+
 class Node;
 class Component;
+class IntegratingComponent;
 
 // A "term" can hold a multiplier and references to a
 // fractional component. All are multiplied together.
@@ -39,6 +42,14 @@ private:
 	std::vector<std::vector<Expression>> expr_mat;
 	std::vector<Expression> expr_vec;
 	size_t n_vars;
+	
+	// Generate, update, or solve circuit matrix
+	void gen_matrix();
+	void update_matrix();
+	void solve_matrix();
+	
+	// Update voltage and current inside a component from solved values
+	void update_component(Component *c);
 	
 	// Map of variable indicies that correspond to voltage sources
 	std::map<Component*, size_t> vsource_map;
@@ -68,7 +79,42 @@ private:
 	// Time
 	double t;
 	
+	// Timestep limits
+	double min_ts, max_ts;
+	
+	// Absolute error and relative error
+	double max_e_abs, max_e_rel;
+	
+	// ODE solver algorithm
+	const gsl_odeiv2_step_type *stepper_type;
+	
+	// GSL diff EQ solver driver object
+	gsl_odeiv2_driver *driver = NULL;
+	
+	// GSL diff EQ solver system
+	gsl_odeiv2_system system;
+	
+	// Diff EQ state
+	std::vector<double> deq_state;
+	
+	// Diff EQ system evaluation function
+	static int system_function(double t, const double y[], double dydt[], void *params);
+	
+	// Map of IntegratingComponents to their indicies in the GSL system
+	std::map<IntegratingComponent*, size_t> int_comp_map;
+	
+	// Times when a save was performed
+	std::vector<double> _save_times;
+	
 public:
+	// Constructor for setting ODE max timestep, solver algorithm, and error limits
+	Circuit(double min_ts = 1e-15, double max_ts = 1e-6, double max_e_abs = 1e-12, double max_e_rel = 1e-3, const gsl_odeiv2_step_type *stepper_type = gsl_odeiv2_step_rkf45);
+	
+	~Circuit();
+	
+	// Prevent copies from being made (because of many internal pointer references)
+	Circuit(const Circuit&) = delete;
+	
 	// Create new nodes
 	Node *add_node();
 	Node *add_node(double v);
@@ -83,10 +129,20 @@ public:
 	}
 	
 	// How often voltages and currents will be saved
+	// Zero for at every computed timestep
 	double save_period = 0;
 	
 	// Enable saving for all nodes and components
-	void save_all(double period = 0);
+	void save_all(double period = -1);
+	
+	// Times when a save was performed
+	const std::vector<double> &save_times();
+	
+	// Next save time
+	double next_save_time();
+	
+	// Save states of all components and nodes (if enabled)
+	void save_states();
 	
 	// Reset everything
 	void reset();
@@ -94,16 +150,18 @@ public:
 	// Get current time
 	double time();
 	
-	// Generate or update circuit matrix
-	void gen_matrix();
-	void update_matrix();
-	
 	// Simulate
 	void sim_to_time(double stop);
 	
-	// Timestep (dynamic)
+	// Timestep (dynamic, will point into driver object)
 	// TODO: figure out how to make private or read only?
-	double dt;
+	double *dt = NULL;
+	
+	// Inexact floor function
+	static inline long epsilon_floor(double x);
+	
+	// Inexact equals
+	static inline bool epsilon_equals(double x, double y);
 	
 	friend class Node;
 	friend class Component;

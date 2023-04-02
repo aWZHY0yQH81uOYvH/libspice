@@ -7,5 +7,7 @@
 #include "Component.hpp"
 
 #include "Resistor.hpp"
+#include "Capacitor.hpp"
+#include "Inductor.hpp"
 #include "VSource.hpp"
 #include "ISource.hpp"

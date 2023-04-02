@@ -1,25 +1,30 @@
 #include <stdio.h>
 
-#include "Circuit.hpp"
+#include "SPICE.hpp"
 
 int main() {
 	Circuit c;
 	
-	Node *gnd  = c.add_node(0);
+	Node *gnd = c.add_node(0);
 	
-	Resistor *R1 = c.add_comp<Resistor>(100);
-	Resistor *R2 = c.add_comp<Resistor>(300);
+	VSource *volt = c.add_comp<VSource>(0);
 	
-	VSource *volt = c.add_comp<VSource>(5);
+	Resistor *R1 = c.add_comp<Resistor>(10);
+	Capacitor *C1 = c.add_comp<Capacitor>(1e-6);
+	Inductor *L1 = c.add_comp<Inductor>(1e-3);
 	
-	gnd->to(volt)->to(R1)->to(R2)->to(gnd);
+	gnd->to(volt)->to(R1)->to(C1)->to(L1)->to(gnd);
 	volt->flip();
 	
-	c.sim_to_time(0);
+	L1->auto_save = true;
+	volt->auto_save = true;
 	
-	printf("R1 V = %f, I = %f\n", R1->voltage(), R1->current());
-	printf("R2 V = %f, I = %f\n", R2->voltage(), R2->current());
-	printf("VSource V = %f, I = %f\n", volt->voltage(), volt->current());
+	c.sim_to_time(0.1e-3);
+	volt->set_value(5);
+	c.sim_to_time(1e-3);
+	
+	for(size_t x=0; x<c.save_times().size(); x++)
+		printf("%e,%e,%e\n", c.save_times()[x], volt->v_hist()[x], L1->v_hist()[x]);
 	
 	return 0;
 }

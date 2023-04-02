@@ -14,6 +14,10 @@ bool Component::fully_connected() {
 	return node_top && node_bottom;
 }
 
+double Component::get_value() {
+	return value;
+}
+
 void Component::set_value(double v) {
 	if(v != value) {
 		value = v;

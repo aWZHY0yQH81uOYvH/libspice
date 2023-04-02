@@ -1,9 +1,28 @@
 #include "Circuit.hpp"
 #include "Node.hpp"
 #include "Component.hpp"
+#include "IntegratingComponent.hpp"
 
 #include <stdexcept>
 #include <map>
+#include <limits>
+
+#include <gsl/gsl_errno.h>
+
+// "Small" for floating-point calculations
+#define EPSILON 1e-15
+
+Circuit::Circuit(double min_ts, double max_ts, double max_e_abs, double max_e_rel, const gsl_odeiv2_step_type *stepper_type):
+	min_ts(min_ts), max_ts(max_ts), max_e_abs(max_e_abs), max_e_rel(max_e_rel), stepper_type(stepper_type) {
+	system.function = system_function;
+	system.jacobian = NULL;
+	system.params = this;
+}
+
+Circuit::~Circuit() {
+	if(driver)
+		gsl_odeiv2_driver_free(driver);
+}
 
 Node *Circuit::add_node() {
 	gen_matrix_pend = true;
@@ -21,14 +40,14 @@ Node *Circuit::add_node(double v) {
 
 // Enable saving for all nodes and components
 void Circuit::save_all(double period) {
-	if(period)
+	if(period >= 0)
 		save_period = period;
 	
 	for(auto &c:components)
-		c->save = true;
+		c->auto_save = true;
 	
 	for(auto &n:nodes)
-		n->save = true;
+		n->auto_save = true;
 }
 
 // Reset all states
@@ -69,6 +88,62 @@ double Circuit::eval_expr(const Expression &e) {
 		ret += t.coeff * num / den;
 	}
 	return ret;
+}
+
+// Floor function that handles floating point imprecision
+long Circuit::epsilon_floor(double x) {
+	long normal_floor = x;
+	if(normal_floor + 1 - x < EPSILON) return normal_floor + 1;
+	return normal_floor;
+}
+
+// Check if floats are really close
+bool Circuit::epsilon_equals(double x, double y) {
+	return abs(x - y) < EPSILON;
+}
+
+// Return the next time we need to save
+double Circuit::next_save_time() {
+	if(save_period) return (epsilon_floor(t/save_period) + 1)*save_period;
+	return std::numeric_limits<double>::max();
+}
+
+const std::vector<double> &Circuit::save_times() {
+	return _save_times;
+}
+
+void Circuit::save_states() {
+	// Check if any components or nodes are flagged to have their state saved
+	bool any_saved = false;
+	
+	for(auto &n:nodes)
+		if(n->auto_save) {
+			any_saved = true;
+			n->save_hist();
+		}
+	
+	for(auto &c:components)
+		if(c->auto_save) {
+			any_saved = true;
+			update_component(c.get());
+			c->save_hist();
+		}
+	
+	if(any_saved)
+		_save_times.push_back(t);
+}
+
+// Update voltage and current inside a component from solved values
+void Circuit::update_component(Component *c) {
+	c->v = c->node_top->v - c->node_bottom->v;
+	
+	// Voltage-defined component has its own current var
+	if(c->v_expr().size())
+		c->i = solved_vec[vsource_map.find(c)->second];
+	
+	// Otherwise evaluate the current expression
+	else
+		c->i = eval_expr(c->i_expr());
 }
 
 void Circuit::gen_matrix() {
@@ -119,6 +194,35 @@ void Circuit::gen_matrix() {
 	// Store each term in the expression matrix as a pair with component pointer (or just dynamic flag since they'd all need to be re-done?)
 	// and term, and keep a list of "dynamic" components so the ones that need to be
 	// updated can quickly be removed and updated instead of re-doing the entire thing
+	
+	// TODO: figure out when to reset driver
+	
+	// Count how many IntegratingComponents we have and give them indicies
+	// Also allocate space for diff EQ state variables and initialize to initial states
+	// already stored in component objects
+	system.dimension = 0;
+	int_comp_map.clear();
+	deq_state.clear();
+	for(auto &c:components) {
+		IntegratingComponent *ic_ptr = dynamic_cast<IntegratingComponent*>(c.get());
+		if(ic_ptr) {
+			int_comp_map.emplace(ic_ptr, system.dimension++);
+			deq_state.push_back(ic_ptr->var);
+		}
+	}
+	
+	// Allocate diff EQ driver if there are any IntegratingComponents
+	if(system.dimension) {
+		if(driver)
+			gsl_odeiv2_driver_free(driver);
+		driver = gsl_odeiv2_driver_alloc_y_new(&system, stepper_type, max_ts, max_e_abs, max_e_rel);
+		if(!driver)
+			throw std::runtime_error("GSL driver allocation failed");
+		gsl_odeiv2_driver_set_hmin(driver, min_ts);
+		gsl_odeiv2_driver_set_hmax(driver, max_ts);
+		dt = &driver->h;
+		*dt = max_ts;
+	} else dt = NULL;
 	
 	// The first rows and columns correspond to nodes
 	for(size_t node_ind=0; node_ind<n_nodes; node_ind++) {
@@ -205,6 +309,8 @@ void Circuit::update_matrix() {
 	// Evaluate the circuit definition matrix with current parameters
 	// and convert to Eigen form
 	
+	// TODO: only update the necessary parts of matrix
+	
 	eval_mat.setZero();
 	for(size_t row=0; row<n_vars; row++)
 		for(size_t col=0; col<n_vars; col++) {
@@ -227,10 +333,12 @@ void Circuit::update_matrix() {
 		update_matrix_pend = NEVER;
 }
 
-void Circuit::sim_to_time(double stop) {
-	if(gen_matrix_pend)
-		gen_matrix();
+void Circuit::solve_matrix() {
+	// Copy the diff EQ state variables back to the IntegratingComponent objects
+	for(auto &ic:int_comp_map)
+		ic.first->var = deq_state[ic.second];
 	
+	// Recompute values in the matrix
 	if(update_matrix_pend)
 		update_matrix();
 	
@@ -239,22 +347,123 @@ void Circuit::sim_to_time(double stop) {
 	if(mat_solver.info() != Eigen::Success)
 		throw std::runtime_error("SparseLU solve: " + mat_solver.lastErrorMessage());
 	
-	// Update node object voltages
+	// Update node object voltages (used in matrix computations)
 	for(size_t ind=0; ind<nodes.size(); ind++)
 		nodes[ind]->v = solved_vec[ind];
+}
+
+int Circuit::system_function(double t, const double y[], double dydt[], void *params) {
+	(void)t;
+	(void)y; // Used in solve_matrix()
+	Circuit *c = (Circuit*)params;
 	
-	// Update component object voltages and currents
-	for(auto &c:components) {
-		c->v = c->node_top->v - c->node_bottom->v;
-		
-		// Voltage-defined component has its own current var
-		if(c->v_expr().size())
-			c->i = solved_vec[vsource_map.find(c.get())->second];
-		
-		// Otherwise evaluate the current expression
-		else
-			c->i = eval_expr(c->i_expr());
+	// Solve matrix to keep all values up-to-date
+	c->solve_matrix();
+	
+	// Evaluate all dydt expressions from each IntegratingComponent
+	for(auto &ic:c->int_comp_map)
+		dydt[ic.second] = eval_expr(ic.first->dydt_expr());
+	
+	return GSL_SUCCESS;
+}
+
+void Circuit::sim_to_time(double stop) {
+	if(gen_matrix_pend)
+		gen_matrix();
+	
+	double new_step = dt ? *dt : max_ts;
+	
+	// Make sure we have a save point at t = 0
+	if(t == 0 && _save_times.size() == 0) {
+		// Small dt for as close to a DC simulation as possible
+		if(dt) *dt = min_ts;
+		solve_matrix();
+		save_states();
 	}
 	
-	// TODO: only compute updates when needed for saving or when exiting this function
+	while(t + EPSILON < stop) {
+		double save_time = next_save_time();
+		
+		// TODO: add calculation for modulators
+		
+		// Step to the soonest event
+		double forced_end_time = std::min({save_time, stop});
+		new_step = std::max(min_ts,
+		           std::min({max_ts,
+		                     new_step,
+							 forced_end_time - t}));
+		
+		if(system.dimension) {
+			*dt = new_step;
+			
+			// Step diff EQs manually so we can get access to intermediate timesteps
+			// (instead of using driver functions); essentially re-create gsl_odeiv2_evolve_apply
+			gsl_odeiv2_evolve *e = driver->e;
+			double *y = deq_state.data();
+			
+			// Save initial y values
+			memcpy(e->y0, y, sizeof(double)*system.dimension);
+			
+			// Generate initial dydt if stepper needs it
+			int step_status;
+			if(driver->s->type->can_use_dydt_in) {
+				if(e->count == 0)
+					system_function(t, y, e->dydt_in, system.params);
+				else
+					memcpy(e->dydt_in, e->dydt_out, sizeof(double)*system.dimension);
+				
+				// Apply step
+				step_status = gsl_odeiv2_step_apply(driver->s, t, *dt, y, e->yerr, e->dydt_in, e->dydt_out, &system);
+			}
+			
+			// Just apply step otherwise
+			else
+				step_status = gsl_odeiv2_step_apply(driver->s, t, *dt, y, e->yerr, NULL, e->dydt_out, &system);
+			
+			if(step_status == GSL_EFAULT)
+				throw std::runtime_error("gsl_odeiv2_step_apply returned EFAULT");
+			
+			// If step succeeded, use automatic step size adjustment function
+			// to possibly adjust the step for the next time
+			if(step_status == GSL_SUCCESS) {
+				e->count++;
+				t += *dt;
+				gsl_odeiv2_control_hadjust(driver->c, driver->s, y, e->yerr, e->dydt_out, &new_step);
+			}
+			
+			// If step didn't succeed, try halving the timestep
+			else {
+				e->failed_steps++;
+				
+				// Can't make dt any smaller
+				if(*dt == min_ts)
+					throw std::runtime_error("System does not converge at min timestep");
+				
+				new_step = *dt/2;
+				
+				// Reset y
+				memcpy(y, e->y0, sizeof(double)*system.dimension);
+				
+				continue;
+			}
+		}
+		
+		// If no diff EQs just solve matrix and jump to next interesting time
+		else {
+			t = forced_end_time;
+			solve_matrix();
+		}
+		
+		// Check if we need to save states
+		// If save time is undefined, save whenever anything happens
+		if(epsilon_equals(t, save_time) || save_time == std::numeric_limits<double>::max())
+			save_states();
+	}
+	
+	// Update component object voltages and currents for user to access
+	for(auto &c:components)
+		update_component(c.get());
+	
+	// Update dt with new value for next time
+	if(dt) *dt = new_step;
 }

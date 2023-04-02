@@ -37,7 +37,6 @@ protected:
 	// Voltage and current histories
 	std::vector<double> _v_hist;
 	std::vector<double> _i_hist;
-	void save_hist();
 	
 	Component(Circuit *parent, double value);
 	Component(Circuit *parent, double value, Node *top, Node *bottom);
@@ -49,12 +48,14 @@ public:
 	bool fully_connected();
 	
 	// Update value (i.e. resistance, capacitance)
+	double get_value();
 	void set_value(double v);
 	
 	// Voltage and current histories
 	const std::vector<double> &v_hist();
 	const std::vector<double> &i_hist();
-	bool save = false;
+	void save_hist();
+	bool auto_save = false;
 	
 	// Current voltage and current values
 	double voltage();

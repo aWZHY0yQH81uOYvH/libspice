@@ -11,7 +11,7 @@ class VSource: public Component {
 	// Inherit constructor
 	using Component::Component;
 	
-	Expression v_expr();
+	virtual Expression v_expr();
 };
 
 #endif
