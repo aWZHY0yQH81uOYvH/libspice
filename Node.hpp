@@ -21,6 +21,7 @@ private:
 	
 	// For nodes to be kept at a constant voltage
 	bool fixed;
+	double fixed_voltage;
 	
 	// List of components connected to this node, and corresponding current directions
 	std::vector<std::pair<Component*, bool>> connections;
@@ -44,7 +45,7 @@ public:
 	bool auto_save = false;
 	
 	// Current voltage
-	double v; // TODO: find a way to make this private? needs to be public for component derived classes
+	double *v = NULL; // TODO: find a way to make this private? needs to be public for component derived classes
 	double voltage();
 	
 	// For connecting to components

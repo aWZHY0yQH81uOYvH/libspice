@@ -135,7 +135,7 @@ void Circuit::save_states() {
 
 // Update voltage and current inside a component from solved values
 void Circuit::update_component(Component *c) {
-	c->v = c->node_top->v - c->node_bottom->v;
+	c->v = *c->node_top->v - *c->node_bottom->v;
 	
 	// Voltage-defined component has its own current var
 	if(c->v_expr().size())
@@ -158,15 +158,6 @@ void Circuit::gen_matrix() {
 	size_t n_nodes = nodes.size();
 	n_vars = n_nodes;
 	
-	// Set the index in each node so going from node pointer to index is faster
-	// Also create map of the pointers to each node's voltage to the node index
-	// for faster association from within components' returned expressions
-	node_map.clear();
-	for(size_t ind=0; ind<n_nodes; ind++) {
-		nodes[ind]->ind = ind;
-		node_map.emplace(&nodes[ind]->v, ind);
-	}
-	
 	// Count how many voltage sources there are and create an index of them
 	// Each voltage source will get an additional variable that represents
 	// the current through it
@@ -188,6 +179,18 @@ void Circuit::gen_matrix() {
 	eval_vec = Eigen::VectorXd(n_vars);
 	solved_vec = Eigen::VectorXd(n_vars);
 	
+	// Set the index in each node so going from node pointer to index is faster
+	// Also set each node's voltage reference to the corresponding variable in
+	// solved_vec
+	// Also create map of the pointers to each node's voltage to the node index
+	// for faster association from within components' returned expressions
+	node_map.clear();
+	for(size_t ind=0; ind<n_nodes; ind++) {
+		nodes[ind]->ind = ind;
+		nodes[ind]->v = &solved_vec[ind];
+		node_map.emplace(nodes[ind]->v, ind);
+	}
+	
 	// TODO: separate alloc_matrix from gen_matrix to enable faster
 	// term expression regeneration for highly nonlinear elements like
 	// MOSFETs
@@ -207,9 +210,13 @@ void Circuit::gen_matrix() {
 		IntegratingComponent *ic_ptr = dynamic_cast<IntegratingComponent*>(c.get());
 		if(ic_ptr) {
 			int_comp_map.emplace(ic_ptr, system.dimension++);
-			deq_state.push_back(ic_ptr->var);
+			deq_state.push_back(ic_ptr->initial_cond);
 		}
 	}
+	
+	// Set each IntegratingComponent's integration variable reference
+	for(auto &ic:int_comp_map)
+		ic.first->var = deq_state.data() + ic.second;
 	
 	// Allocate diff EQ driver if there are any IntegratingComponents
 	if(system.dimension) {
@@ -232,7 +239,7 @@ void Circuit::gen_matrix() {
 		if(n->fixed) {
 			// 1 * node voltage = fixed value
 			expr_mat[node_ind][node_ind].push_back({1.0, {}, {}});
-			expr_vec[node_ind].push_back({n->v, {}, {}});
+			expr_vec[node_ind].push_back({*n->v, {}, {}});
 		}
 		
 		// Node is free to move; add currents to do KCL
@@ -334,10 +341,6 @@ void Circuit::update_matrix() {
 }
 
 void Circuit::solve_matrix() {
-	// Copy the diff EQ state variables back to the IntegratingComponent objects
-	for(auto &ic:int_comp_map)
-		ic.first->var = deq_state[ic.second];
-	
 	// Recompute values in the matrix
 	if(update_matrix_pend)
 		update_matrix();
@@ -346,10 +349,6 @@ void Circuit::solve_matrix() {
 	solved_vec = mat_solver.solve(eval_vec);
 	if(mat_solver.info() != Eigen::Success)
 		throw std::runtime_error("SparseLU solve: " + mat_solver.lastErrorMessage());
-	
-	// Update node object voltages (used in matrix computations)
-	for(size_t ind=0; ind<nodes.size(); ind++)
-		nodes[ind]->v = solved_vec[ind];
 }
 
 int Circuit::system_function(double t, const double y[], double dydt[], void *params) {

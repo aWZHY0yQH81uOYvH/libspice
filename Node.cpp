@@ -6,18 +6,18 @@
 
 Node::Node(Circuit *c): parent_circuit(c), fixed(false) {}
 
-Node::Node(Circuit *c, double v): parent_circuit(c), fixed(true), v(v) {}
+Node::Node(Circuit *c, double v): parent_circuit(c), fixed(true), fixed_voltage(v), v(&fixed_voltage) {}
 
 const std::vector<double> &Node::v_hist() {
 	return _v_hist;
 }
 
 void Node::save_hist() {
-	_v_hist.push_back(v);
+	_v_hist.push_back(v ? *v : 0);
 }
 
 double Node::voltage() {
-	return v;
+	return v ? *v : 0;
 }
 
 Component *Node::to(Component *c) {

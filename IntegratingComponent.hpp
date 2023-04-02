@@ -11,7 +11,8 @@
 class IntegratingComponent: public Component {
 protected:
 	// Variable for integration
-	double var;
+	double *var = NULL;
+	double initial_cond;
 	
 	// Expression to be integrated to find var
 	virtual Expression dydt_expr();
