@@ -41,6 +41,9 @@ protected:
 	Component(Circuit *parent, double value);
 	Component(Circuit *parent, double value, Node *top, Node *bottom);
 	
+	// No copy constructor
+	Component(const Component&) = delete;
+	
 public:
 	virtual ~Component() {}
 	

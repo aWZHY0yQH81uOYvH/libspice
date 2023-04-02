@@ -34,6 +34,9 @@ private:
 	// Fixed-voltage node
 	Node(Circuit *c, double v);
 	
+	// No copy constructor
+	Node(const Node&) = delete;
+	
 public:
 	// Voltage history
 	const std::vector<double> &v_hist();
