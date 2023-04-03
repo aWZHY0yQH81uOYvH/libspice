@@ -15,9 +15,13 @@
 
 #include <gsl/gsl_odeiv2.h>
 
+// "Small" for floating-point calculations
+#define EPSILON 1e-15
+
 class Node;
 class Component;
 class IntegratingComponent;
+class Modulator;
 
 // A "term" can hold a multiplier and references to a
 // fractional component. All are multiplied together.
@@ -37,6 +41,9 @@ private:
 	
 	// Components in circuit
 	std::vector<std::unique_ptr<Component>> components;
+	
+	// Modulators that can control component values
+	std::vector<std::unique_ptr<Modulator>> modulators;
 	
 	// Circuit representation
 	// expr_mat is sparse so needs a helper function for easy access
@@ -130,6 +137,14 @@ public:
 		return c;
 	}
 	
+	// Create new modulators
+	// (define here so templates can be created on demand)
+	template<typename T, typename... Args> T *add_mod(Args&&... args) {
+		T *c = new T(this, std::forward<Args>(args)...);
+		modulators.emplace_back(c);
+		return c;
+	}
+	
 	// How often voltages and currents will be saved
 	// Zero for at every computed timestep
 	double save_period = 0;
@@ -155,15 +170,19 @@ public:
 	// Simulate
 	void sim_to_time(double stop);
 	
+	// Indicate that something has changed and the circuit matrix needs to be re-evaluated
+	// Shouldn't need to be called by user code
+	void needs_update();
+	
 	// Timestep (dynamic, will point into driver object)
 	// TODO: figure out how to make private or read only?
 	double *dt = NULL;
 	
 	// Inexact floor function
-	static inline long epsilon_floor(double x);
+	static long epsilon_floor(double x);
 	
 	// Inexact equals
-	static inline bool epsilon_equals(double x, double y);
+	static bool epsilon_equals(double x, double y);
 	
 	friend class Node;
 	friend class Component;

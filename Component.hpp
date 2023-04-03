@@ -10,6 +10,7 @@
 #include "Circuit.hpp"
 
 class Node;
+class Modulator;
 
 class Component {
 protected:
@@ -19,6 +20,9 @@ protected:
 	// Nodes that we're connected to
 	Node *node_top = NULL;
 	Node *node_bottom = NULL;
+	
+	// Optional modulator that can control our value
+	Modulator *mod = NULL;
 	
 	// Generic value for simple component types
 	double value;
@@ -40,6 +44,9 @@ protected:
 	
 	Component(Circuit *parent, double value);
 	Component(Circuit *parent, double value, Node *top, Node *bottom);
+	Component(Circuit *parent, Modulator *m, int flags = 0);
+	Component(Circuit *parent, Modulator *m, Node *top, Node *bottom);
+	Component(Circuit *parent, Modulator *m, int flags, Node *top, Node *bottom);
 	
 	// No copy constructor
 	Component(const Component&) = delete;
@@ -53,6 +60,10 @@ public:
 	// Update value (i.e. resistance, capacitance)
 	double get_value();
 	void set_value(double v);
+	
+	// Automatic modulator control over value
+	void set_value(Modulator *m, int flags = 0);
+	void remove_mod();
 	
 	// Voltage and current histories
 	const std::vector<double> &v_hist();

@@ -1,12 +1,25 @@
 #include "Component.hpp"
 #include "Circuit.hpp"
 #include "Node.hpp"
+#include "Modulator.hpp"
 
 #include <stdexcept>
 
 Component::Component(Circuit *c, double v): parent_circuit(c), value(v) {}
 
 Component::Component(Circuit *c, double v, Node *top, Node *bottom): Component(c, v) {
+	top->to(this)->to(bottom);
+}
+
+Component::Component(Circuit *c, Modulator *m, int flags): Component(c, 0.0) {
+	set_value(m, flags);
+}
+
+Component::Component(Circuit *c, Modulator *m, Node *top, Node *bottom): Component(c, m, 0) {
+	top->to(this)->to(bottom);
+}
+
+Component::Component(Circuit *c, Modulator *m, int flags, Node *top, Node *bottom): Component(c, m, flags) {
 	top->to(this)->to(bottom);
 }
 
@@ -19,10 +32,29 @@ double Component::get_value() {
 }
 
 void Component::set_value(double v) {
+	if(mod)
+		throw std::logic_error("Component's value is already controlled by a modulator");
+	
 	if(v != value) {
 		value = v;
-		if(!parent_circuit->update_matrix_pend)
-			parent_circuit->update_matrix_pend = Circuit::ONCE;
+		parent_circuit->needs_update();
+	}
+}
+
+void Component::set_value(Modulator *m, int flags) {
+	remove_mod();
+	mod = m;
+	mod->controlled.emplace_back(&value, flags);
+}
+
+void Component::remove_mod() {
+	if(mod) {
+		for(auto it = mod->controlled.begin(); it != mod->controlled.end(); it++)
+			if(it->first == &value) {
+				mod->controlled.erase(it);
+				break;
+			}
+		mod = NULL;
 	}
 }
 

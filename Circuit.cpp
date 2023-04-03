@@ -2,15 +2,13 @@
 #include "Node.hpp"
 #include "Component.hpp"
 #include "IntegratingComponent.hpp"
+#include "Modulator.hpp"
 
 #include <stdexcept>
 #include <map>
 #include <limits>
 
 #include <gsl/gsl_errno.h>
-
-// "Small" for floating-point calculations
-#define EPSILON 1e-15
 
 Circuit::Circuit(double min_ts, double max_ts, double max_e_abs, double max_e_rel, const gsl_odeiv2_step_type *stepper_type):
 	min_ts(min_ts), max_ts(max_ts), max_e_abs(max_e_abs), max_e_rel(max_e_rel), stepper_type(stepper_type) {
@@ -62,6 +60,9 @@ void Circuit::reset() {
 	
 	for(auto &n:nodes)
 		n->_v_hist.clear();
+	
+	for(auto &m:modulators)
+		m->reset();
 }
 
 // Get current simulation time
@@ -147,6 +148,7 @@ void Circuit::update_component(Component *c) {
 	c->v = *c->node_top->v - *c->node_bottom->v;
 	
 	// Voltage-defined component has its own current var
+	// TODO: optimize out find calls
 	if(c->v_expr().size())
 		c->i = solved_vec[vsource_map.find(c)->second];
 	
@@ -331,6 +333,7 @@ void Circuit::update_matrix() {
 		eval_vec[row] = eval_expr(expr_vec[row]);
 	
 	// Prepare the solver
+	// TODO: always need to analyzePattern?
 	eval_mat.makeCompressed();
 	mat_solver.analyzePattern(eval_mat);
 	mat_solver.factorize(eval_mat);
@@ -339,6 +342,11 @@ void Circuit::update_matrix() {
 	
 	if(update_matrix_pend == ONCE)
 		update_matrix_pend = NEVER;
+}
+
+void Circuit::needs_update() {
+	if(!update_matrix_pend)
+		update_matrix_pend = ONCE;
 }
 
 void Circuit::solve_matrix() {
@@ -387,7 +395,12 @@ void Circuit::sim_to_time(double stop) {
 		// TODO: add calculation for modulators
 		
 		// Step to the soonest event
-		double forced_end_time = std::min({save_time, stop});
+		double forced_end_time = std::min(save_time, stop);
+		for(auto &m:modulators) {
+			double mod_change_time = m->next_change_time();
+			if(mod_change_time < forced_end_time)
+				forced_end_time = mod_change_time;
+		}
 		new_step = std::max(min_ts,
 		           std::min({max_ts,
 		                     new_step,
@@ -458,6 +471,10 @@ void Circuit::sim_to_time(double stop) {
 		// If save time is undefined, save whenever anything happens
 		if(epsilon_equals(t, save_time) || save_time == std::numeric_limits<double>::max())
 			save_states();
+		
+		// Run modulators
+		for(auto &m:modulators)
+			m->apply();
 	}
 	
 	// Update component object voltages and currents for user to access

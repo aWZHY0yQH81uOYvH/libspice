@@ -11,3 +11,7 @@
 #include "Inductor.hpp"
 #include "VSource.hpp"
 #include "ISource.hpp"
+
+#include "Modulator.hpp"
+#include "PWM.hpp"
+#include "Sine.hpp"
