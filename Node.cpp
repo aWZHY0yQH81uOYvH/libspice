@@ -28,6 +28,8 @@ Component *Node::to(Component *c) {
 	parent_circuit->gen_matrix_pend = true;
 	
 	// Tell component about this node
+	if(c->node_top)
+		throw std::invalid_argument("Component already connected");
 	c->node_top = this;
 	
 	// Current exiting this node

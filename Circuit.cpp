@@ -145,6 +145,8 @@ void Circuit::save_states() {
 
 // Update voltage and current inside a component from solved values
 void Circuit::update_component(Component *c) {
+	if(!c->node_top || !c->node_bottom) return;
+
 	c->v = *c->node_top->v - *c->node_bottom->v;
 	
 	// Voltage-defined component has its own current var

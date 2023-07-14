@@ -108,6 +108,8 @@ Node *Component::to(Node *n) {
 	parent_circuit->gen_matrix_pend = true;
 	
 	// Remember our connections
+	if(node_bottom)
+		throw std::invalid_argument("Component already connected");
 	node_bottom = n;
 	
 	// Current entering the node
