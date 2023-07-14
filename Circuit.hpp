@@ -10,8 +10,12 @@
 #include <utility>
 
 #include <Eigen/Core>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #include <Eigen/Sparse>
 #include <Eigen/SparseLU>
+#pragma clang diagnostic pop
 
 #include <gsl/gsl_odeiv2.h>
 
