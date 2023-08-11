@@ -31,8 +31,14 @@ protected:
 	virtual bool is_dynamic() const;
 	
 	// Return expressions representing the voltage and current across/through this component
+	Expression v_expr(bool dc) const;
+	Expression i_expr(bool dc) const;
 	virtual Expression v_expr() const;
 	virtual Expression i_expr() const;
+	
+	// V/I expressions used for solving DC initial steady-state
+	virtual Expression dc_v_expr() const;
+	virtual Expression dc_i_expr() const;
 	
 	// Voltage across and current through this component (to be updated by the solver)
 	// DO NOT USE IN EXPRESSIONS

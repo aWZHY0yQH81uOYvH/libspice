@@ -88,6 +88,17 @@ bool Component::is_dynamic() const {
 	return false;
 }
 
+// Return normal or DC expressions
+Expression Component::v_expr(bool dc) const {
+	if(dc) return dc_v_expr();
+	return v_expr();
+}
+
+Expression Component::i_expr(bool dc) const {
+	if(dc) return dc_i_expr();
+	return i_expr();
+}
+
 // Default to an undefined component
 Expression Component::v_expr() const {
 	return {};
@@ -95,6 +106,15 @@ Expression Component::v_expr() const {
 
 Expression Component::i_expr() const {
 	return {};
+}
+
+// Default to the same behavior for DC analysis
+Expression Component::dc_v_expr() const {
+	return v_expr();
+}
+
+Expression Component::dc_i_expr() const {
+	return i_expr();
 }
 
 Node *Component::to(Node *n) {
@@ -105,7 +125,7 @@ Node *Component::to(Node *n) {
 		throw std::invalid_argument("Both ends connected to same node");
 	
 	// Circuit topology changed...
-	parent_circuit->gen_matrix_pend = true;
+	parent_circuit->topology_changed();
 	
 	// Remember our connections
 	if(node_bottom)
@@ -126,7 +146,7 @@ Component *Component::to(Component *c) {
 
 void Component::flip() {
 	// Circuit topology changed...
-	parent_circuit->gen_matrix_pend = true;
+	parent_circuit->topology_changed();
 	
 	// Flip component direction
 	Node *temp = node_bottom;

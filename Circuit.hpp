@@ -57,12 +57,12 @@ private:
 	size_t n_vars;
 	
 	// Generate, update, or solve circuit matrix
-	void gen_matrix();
+	void gen_matrix(bool dc = false);
 	void update_matrix();
 	void solve_matrix();
 	
 	// Update voltage and current inside a component from solved values
-	void update_component(Component *c);
+	void update_component(Component *c, bool dc = false);
 	
 	// Map of variable indicies that correspond to voltage sources
 	std::map<Component*, size_t> vsource_map;
@@ -135,7 +135,7 @@ public:
 	// Create new components
 	// (define here so templates can be created on demand)
 	template<typename T, typename... Args> T *add_comp(Args&&... args) {
-		gen_matrix_pend = true;
+		topology_changed();
 		T *c = new T(this, std::forward<Args>(args)...);
 		components.emplace_back(c);
 		return c;
@@ -163,7 +163,7 @@ public:
 	double next_save_time();
 	
 	// Save states of all components and nodes (if enabled)
-	void save_states();
+	void save_states(bool dc = false);
 	
 	// Reset everything
 	void reset();
@@ -174,9 +174,16 @@ public:
 	// Simulate
 	void sim_to_time(double stop);
 	
+	// DC solution for generating steady-state
+	bool dc_solution_pend = true;
+	void compute_dc_solution();
+	
 	// Indicate that something has changed and the circuit matrix needs to be re-evaluated
 	// Shouldn't need to be called by user code
 	void needs_update();
+	
+	// Indicate that the circuit topology has changed so the matrix needs to be re-generated
+	void topology_changed();
 	
 	// Timestep (dynamic, will point into driver object)
 	// TODO: figure out how to make private or read only?

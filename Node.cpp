@@ -25,7 +25,7 @@ Component *Node::to(Component *c) {
 		throw std::invalid_argument("Component not in the same circuit");
 	
 	// Circuit topology changed...
-	parent_circuit->gen_matrix_pend = true;
+	parent_circuit->topology_changed();
 	
 	// Tell component about this node
 	if(c->node_top)

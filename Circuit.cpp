@@ -23,14 +23,14 @@ Circuit::~Circuit() {
 }
 
 Node *Circuit::add_node() {
-	gen_matrix_pend = true;
+	topology_changed();
 	Node *n = new Node{this};
 	nodes.emplace_back(n);
 	return n;
 }
 
 Node *Circuit::add_node(double v) {
-	gen_matrix_pend = true;
+	topology_changed();
 	Node *n = new Node{this, v};
 	nodes.emplace_back(n);
 	return n;
@@ -51,6 +51,7 @@ void Circuit::save_all(double period) {
 // Reset all states
 void Circuit::reset() {
 	gen_matrix_pend = true;
+	dc_solution_pend = true;
 	t = 0;
 	
 	for(auto &c:components) {
@@ -122,7 +123,7 @@ const std::vector<double> &Circuit::save_times() {
 	return _save_times;
 }
 
-void Circuit::save_states() {
+void Circuit::save_states(bool dc) {
 	// Check if any components or nodes are flagged to have their state saved
 	bool any_saved = false;
 	
@@ -135,7 +136,7 @@ void Circuit::save_states() {
 	for(auto &c:components)
 		if(c->auto_save) {
 			any_saved = true;
-			update_component(c.get());
+			update_component(c.get(), dc);
 			c->save_hist();
 		}
 	
@@ -144,24 +145,22 @@ void Circuit::save_states() {
 }
 
 // Update voltage and current inside a component from solved values
-void Circuit::update_component(Component *c) {
+void Circuit::update_component(Component *c, bool dc) {
 	if(!c->node_top || !c->node_bottom) return;
 
 	c->v = *c->node_top->v - *c->node_bottom->v;
 	
 	// Voltage-defined component has its own current var
 	// TODO: optimize out find calls
-	if(c->v_expr().size())
+	if(c->v_expr(dc).size())
 		c->i = solved_vec[vsource_map.find(c)->second];
 	
 	// Otherwise evaluate the current expression
 	else
-		c->i = eval_expr(c->i_expr());
+		c->i = eval_expr(c->i_expr(dc));
 }
 
-void Circuit::gen_matrix() {
-	reset();
-	
+void Circuit::gen_matrix(bool dc) {
 	// Make sure all components are connected properly
 	for(std::unique_ptr<Component> &c:components)
 		if(!c->fully_connected())
@@ -176,7 +175,7 @@ void Circuit::gen_matrix() {
 	// the current through it
 	vsource_map.clear();
 	for(auto &c:components)
-		if(c->v_expr().size())
+		if(c->v_expr(dc).size())
 			vsource_map.emplace(c.get(), n_vars++);
 	
 	// Clear and resize circuit representation
@@ -209,36 +208,38 @@ void Circuit::gen_matrix() {
 	
 	// TODO: figure out when to reset driver
 	
-	// Count how many IntegratingComponents we have and give them indicies
-	// Also allocate space for diff EQ state variables and initialize to initial states
-	// already stored in component objects
-	system.dimension = 0;
-	int_comp_map.clear();
-	deq_state.clear();
-	for(auto &c:components) {
-		IntegratingComponent *ic_ptr = dynamic_cast<IntegratingComponent*>(c.get());
-		if(ic_ptr) {
-			int_comp_map.emplace(ic_ptr, system.dimension++);
-			deq_state.push_back(ic_ptr->initial_cond);
+	if(!dc) {
+		// Count how many IntegratingComponents we have and give them indicies
+		// Also allocate space for diff EQ state variables and initialize to initial states
+		// already stored in component objects
+		system.dimension = 0;
+		int_comp_map.clear();
+		deq_state.clear();
+		for(auto &c:components) {
+			IntegratingComponent *ic_ptr = dynamic_cast<IntegratingComponent*>(c.get());
+			if(ic_ptr) {
+				int_comp_map.emplace(ic_ptr, system.dimension++);
+				deq_state.push_back(ic_ptr->initial_cond);
+			}
 		}
+	
+		// Set each IntegratingComponent's integration variable reference
+		for(auto &ic:int_comp_map)
+			ic.first->var = deq_state.data() + ic.second;
+	
+		// Allocate diff EQ driver if there are any IntegratingComponents
+		if(system.dimension) {
+			if(driver)
+				gsl_odeiv2_driver_free(driver);
+			driver = gsl_odeiv2_driver_alloc_y_new(&system, stepper_type, max_ts, max_e_abs, max_e_rel);
+			if(!driver)
+				throw std::runtime_error("GSL driver allocation failed");
+			gsl_odeiv2_driver_set_hmin(driver, min_ts);
+			gsl_odeiv2_driver_set_hmax(driver, max_ts);
+			dt = &driver->h;
+			*dt = max_ts;
+		} else dt = NULL;
 	}
-	
-	// Set each IntegratingComponent's integration variable reference
-	for(auto &ic:int_comp_map)
-		ic.first->var = deq_state.data() + ic.second;
-	
-	// Allocate diff EQ driver if there are any IntegratingComponents
-	if(system.dimension) {
-		if(driver)
-			gsl_odeiv2_driver_free(driver);
-		driver = gsl_odeiv2_driver_alloc_y_new(&system, stepper_type, max_ts, max_e_abs, max_e_rel);
-		if(!driver)
-			throw std::runtime_error("GSL driver allocation failed");
-		gsl_odeiv2_driver_set_hmin(driver, min_ts);
-		gsl_odeiv2_driver_set_hmax(driver, max_ts);
-		dt = &driver->h;
-		*dt = max_ts;
-	} else dt = NULL;
 	
 	// The first rows and columns correspond to nodes
 	for(size_t node_ind=0; node_ind<n_nodes; node_ind++) {
@@ -255,7 +256,7 @@ void Circuit::gen_matrix() {
 		else {
 			// Iterate through all components connected to this node
 			for(auto &ci:n->connections) {
-				Expression ie = ci.first->i_expr();
+				Expression ie = ci.first->i_expr(dc);
 				
 				// If current is leaving, invert coefficients of all terms
 				if(!ci.second)
@@ -307,7 +308,7 @@ void Circuit::gen_matrix() {
 		// Node voltage at the negative side should have negative sign
 		expr_mat_helper(extra_var_ind, vsource->node_top   ->ind).push_back({ 1.0, {}, {}});
 		expr_mat_helper(extra_var_ind, vsource->node_bottom->ind).push_back({-1.0, {}, {}});
-		expr_vec[extra_var_ind] = vsource->v_expr();
+		expr_vec[extra_var_ind] = vsource->v_expr(dc);
 	}
 	
 	gen_matrix_pend = false;
@@ -351,6 +352,11 @@ void Circuit::needs_update() {
 		update_matrix_pend = ONCE;
 }
 
+void Circuit::topology_changed() {
+	gen_matrix_pend = true;
+	dc_solution_pend = true;
+}
+
 void Circuit::solve_matrix() {
 	// Recompute values in the matrix
 	if(update_matrix_pend)
@@ -360,6 +366,36 @@ void Circuit::solve_matrix() {
 	solved_vec = mat_solver.solve(eval_vec);
 	if(mat_solver.info() != Eigen::Success)
 		throw std::runtime_error("SparseLU solve: " + mat_solver.lastErrorMessage());
+}
+
+void Circuit::compute_dc_solution() {
+	reset();
+	
+	gen_matrix(true);
+	
+	for(auto &m:modulators)
+		m->apply();
+	
+	update_matrix();
+	solve_matrix();
+	
+	// Update initial conditions for all IntegratingComponents that don't have it specified already
+	for(auto &c:components) {
+		IntegratingComponent *ic_ptr = dynamic_cast<IntegratingComponent*>(c.get());
+		if(ic_ptr && !ic_ptr->initial_cond_specified) {
+			update_component(ic_ptr, true);
+			ic_ptr->gen_initial_cond();
+		}
+	}
+	
+	save_states(true);
+	
+	for(auto &m:modulators)
+		m->reset();
+	
+	needs_update();
+	dc_solution_pend = false;
+	gen_matrix_pend = true;
 }
 
 int Circuit::system_function(double t, const double y[], double dydt[], void *params) {
@@ -394,18 +430,16 @@ int Circuit::system_function(double t, const double y[], double dydt[], void *pa
 }
 
 void Circuit::sim_to_time(double stop) {
-	if(gen_matrix_pend)
+	if(dc_solution_pend)
+		compute_dc_solution();
+	
+	if(gen_matrix_pend) {
 		gen_matrix();
+		for(auto &m:modulators)
+			m->apply();
+	}
 	
 	double new_step = dt ? *dt : max_ts;
-	
-	// Make sure we have a save point at t = 0
-	if(t == 0 && _save_times.size() == 0) {
-		// Small dt for as close to a DC simulation as possible
-		if(dt) *dt = min_ts;
-		solve_matrix();
-		save_states();
-	}
 	
 	while(t + EPSILON < stop) {
 		double save_time = next_save_time();
