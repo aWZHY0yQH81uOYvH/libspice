@@ -12,3 +12,7 @@ void Sine::apply() {
 		*c.first = value;
 	parent_circuit->needs_update();
 }
+
+bool Sine::continuous() const {
+	return true;
+}

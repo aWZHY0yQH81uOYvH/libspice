@@ -18,6 +18,7 @@ private:
 	
 	virtual void reset();
 	virtual void apply();
+	virtual bool continuous() const;
 	
 	void _apply(bool state);
 	

@@ -25,6 +25,11 @@ protected:
 	// Apply changes to controlled variables
 	virtual void apply();
 	
+	// Return true if this modulator can handle mon-monotonic time
+	// Should be true for continuous functions, false for discontinuous ones
+	// apply() will be called in the RK integration substeps if true
+	virtual bool continuous() const;
+	
 public:
 	virtual ~Modulator() {}
 	

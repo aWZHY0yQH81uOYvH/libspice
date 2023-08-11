@@ -5,7 +5,8 @@ OBJS=$(SOURCES:%.cpp=build/%.o)
 CFLAGS=-O2 -Wall -Wextra -std=c++11 -I/usr/local/include -I/usr/local/include/eigen3
 
 GSL=-lgsl -lgslcblas -lm
-LIBS=-L/usr/local/lib $(GSL)
+MATPLOT=-lmatplot
+LIBS=-L/usr/local/lib $(GSL) $(MATPLOT)
 
 test: $(OBJS)
 	$(CXX) $(CFLAGS) $(LIBS) -o $@ $^

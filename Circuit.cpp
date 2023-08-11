@@ -363,9 +363,21 @@ void Circuit::solve_matrix() {
 }
 
 int Circuit::system_function(double t, const double y[], double dydt[], void *params) {
-	(void)t;
-	(void)y; // Used in solve_matrix()
 	Circuit *c = (Circuit*)params;
+	
+	// Save values for t and y
+	double tempt = c->t;
+	double tempy[c->deq_state.size()];
+	memcpy(tempy, c->deq_state.data(), c->deq_state.size()*sizeof(double));
+	
+	// Ensure the values passed to this function are used
+	memcpy(c->deq_state.data(), y, c->deq_state.size()*sizeof(double));
+	c->t = t;
+	
+	// Update modulators
+	for(auto &m:c->modulators)
+		if(m->continuous())
+			m->apply();
 	
 	// Solve matrix to keep all values up-to-date
 	c->solve_matrix();
@@ -373,6 +385,10 @@ int Circuit::system_function(double t, const double y[], double dydt[], void *pa
 	// Evaluate all dydt expressions from each IntegratingComponent
 	for(auto &ic:c->int_comp_map)
 		dydt[ic.second] = eval_expr(ic.first->dydt_expr());
+	
+	// Restore old values t and y values for main circuit class
+	c->t = tempt;
+	memcpy(c->deq_state.data(), tempy, c->deq_state.size()*sizeof(double));
 	
 	return GSL_SUCCESS;
 }

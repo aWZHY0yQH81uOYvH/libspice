@@ -18,6 +18,10 @@ void PWM::apply() {
 	_apply(next_state);
 }
 
+bool PWM::continuous() const {
+	return false;
+}
+
 void PWM::_apply(bool state) {
 	for(auto &c:controlled)
 		*c.first = state ^ (c.second & Inverted) ? h_value : l_value;
