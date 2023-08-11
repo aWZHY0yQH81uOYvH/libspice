@@ -15,7 +15,7 @@ protected:
 	double initial_cond;
 	
 	// Expression to be integrated to find var
-	virtual Expression dydt_expr();
+	virtual Expression dydt_expr() const;
 	
 	virtual bool is_dynamic() const;
 

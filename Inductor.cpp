@@ -1,7 +1,7 @@
 #include "Inductor.hpp"
 #include "Node.hpp"
 
-Expression Inductor::i_expr() {
+Expression Inductor::i_expr() const {
 	// V = L * dI/dt
 	// V = IR
 	// Current source in parallel with a resistor
@@ -12,7 +12,7 @@ Expression Inductor::i_expr() {
 	        {-1, {node_bottom->v, parent_circuit->dt}, {&this->value}}};
 }
 
-Expression Inductor::dydt_expr() {
+Expression Inductor::dydt_expr() const {
 	// dI/dt = V/L
 	return {{ 1, {node_top->v   }, {&this->value}},
 	        {-1, {node_bottom->v}, {&this->value}}};

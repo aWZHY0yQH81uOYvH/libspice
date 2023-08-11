@@ -11,7 +11,7 @@ class Resistor: public Component {
 	// Inherit constructor
 	using Component::Component;
 	
-	virtual Expression i_expr();
+	virtual Expression i_expr() const;
 };
 
 #endif

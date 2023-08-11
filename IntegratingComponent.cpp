@@ -16,7 +16,7 @@ void IntegratingComponent::set_initial_cond(double value) {
 	initial_cond = value;
 }
 
-Expression IntegratingComponent::dydt_expr() {
+Expression IntegratingComponent::dydt_expr() const {
 	return {};
 }
 

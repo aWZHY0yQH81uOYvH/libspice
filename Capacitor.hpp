@@ -11,8 +11,8 @@ class Capacitor: public IntegratingComponent {
 	// Inherit constructor
 	using IntegratingComponent::IntegratingComponent;
 	
-	virtual Expression i_expr();
-	virtual Expression dydt_expr();
+	virtual Expression i_expr() const;
+	virtual Expression dydt_expr() const;
 };
 
 #endif

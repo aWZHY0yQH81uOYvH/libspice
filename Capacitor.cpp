@@ -1,7 +1,7 @@
 #include "Capacitor.hpp"
 #include "Node.hpp"
 
-Expression Capacitor::i_expr() {
+Expression Capacitor::i_expr() const {
 	// I = C * dV/dt
 	// I = V/R
 	// Voltage source in series with resistor
@@ -15,7 +15,7 @@ Expression Capacitor::i_expr() {
 	        {-1, {node_bottom->v, &this->value}, {parent_circuit->dt}}};
 }
 
-Expression Capacitor::dydt_expr() {
+Expression Capacitor::dydt_expr() const {
 	// dV/dt = I/C
 	// same as i_expr but divided by C
 	return {{-1, {this->var     }, {parent_circuit->dt}},

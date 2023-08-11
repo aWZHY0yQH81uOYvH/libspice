@@ -89,11 +89,11 @@ bool Component::is_dynamic() const {
 }
 
 // Default to an undefined component
-Expression Component::v_expr() {
+Expression Component::v_expr() const {
 	return {};
 }
 
-Expression Component::i_expr() {
+Expression Component::i_expr() const {
 	return {};
 }
 

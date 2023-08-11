@@ -31,8 +31,8 @@ protected:
 	virtual bool is_dynamic() const;
 	
 	// Return expressions representing the voltage and current across/through this component
-	virtual Expression v_expr();
-	virtual Expression i_expr();
+	virtual Expression v_expr() const;
+	virtual Expression i_expr() const;
 	
 	// Voltage across and current through this component (to be updated by the solver)
 	// DO NOT USE IN EXPRESSIONS
