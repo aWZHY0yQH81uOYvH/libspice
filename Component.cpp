@@ -23,11 +23,11 @@ Component::Component(Circuit *c, Modulator *m, int flags, Node *top, Node *botto
 	top->to(this)->to(bottom);
 }
 
-bool Component::fully_connected() {
+bool Component::fully_connected() const {
 	return node_top && node_bottom;
 }
 
-double Component::get_value() {
+double Component::get_value() const {
 	return value;
 }
 
@@ -84,7 +84,7 @@ double Component::power() {
 }
 
 // Default to a non-dynamic component
-bool Component::is_dynamic() {
+bool Component::is_dynamic() const {
 	return false;
 }
 

@@ -11,13 +11,13 @@
 class IntegratingComponent: public Component {
 protected:
 	// Variable for integration
-	double *var = NULL;
+	const double *var = NULL;
 	double initial_cond;
 	
 	// Expression to be integrated to find var
 	virtual Expression dydt_expr();
 	
-	virtual bool is_dynamic();
+	virtual bool is_dynamic() const;
 
 public:
 	IntegratingComponent(Circuit *parent, double value, double initial_cond = 0);

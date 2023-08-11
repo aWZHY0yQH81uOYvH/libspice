@@ -28,7 +28,7 @@ protected:
 	double value;
 	
 	// Return true to force re-evaluation of the component expressions at every timestep
-	virtual bool is_dynamic();
+	virtual bool is_dynamic() const;
 	
 	// Return expressions representing the voltage and current across/through this component
 	virtual Expression v_expr();
@@ -55,10 +55,10 @@ public:
 	virtual ~Component() {}
 	
 	// Check if both ends of the component are connected
-	bool fully_connected();
+	virtual bool fully_connected() const;
 	
 	// Update value (i.e. resistance, capacitance)
-	double get_value();
+	double get_value() const;
 	void set_value(double v);
 	
 	// Automatic modulator control over value

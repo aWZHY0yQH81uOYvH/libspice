@@ -20,6 +20,6 @@ Expression IntegratingComponent::dydt_expr() {
 	return {};
 }
 
-bool IntegratingComponent::is_dynamic() {
+bool IntegratingComponent::is_dynamic() const {
 	return true;
 }

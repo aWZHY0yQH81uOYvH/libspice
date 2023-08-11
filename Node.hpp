@@ -45,7 +45,7 @@ public:
 	bool auto_save = false;
 	
 	// Current voltage
-	double *v = NULL; // TODO: find a way to make this private? needs to be public for component derived classes
+	const double *v = NULL; // TODO: find a way to make this private? needs to be public for component derived classes
 	double voltage();
 	
 	// For connecting to components
