@@ -1,0 +1,5 @@
+set(libspice_INCLUDE_DIRS "@libspice_INCLUDE_DIRS@")
+set(libspice_LIBRARY_DIRS "@libspice_LIBRARY_DIRS@")
+set(libspice_LIBRARIES "@libspice_LIBRARIES@")
+
+set(libspice_FOUND TRUE)
