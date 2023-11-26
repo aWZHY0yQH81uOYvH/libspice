@@ -1,5 +1,5 @@
-#include "Inductor.hpp"
-#include "Node.hpp"
+#include "Component/Inductor.hpp"
+#include "Core/Node.hpp"
 
 Expression Inductor::i_expr() const {
 	// V = L * dI/dt

@@ -5,7 +5,7 @@
 #ifndef RESISTOR_HPP
 #define RESISTOR_HPP
 
-#include "Component.hpp"
+#include "Core/Component.hpp"
 
 class Resistor: public Component {
 	// Inherit constructor

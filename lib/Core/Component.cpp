@@ -1,7 +1,7 @@
-#include "Component.hpp"
-#include "Circuit.hpp"
-#include "Node.hpp"
-#include "Modulator.hpp"
+#include "Core/Component.hpp"
+#include "Core/Circuit.hpp"
+#include "Core/Node.hpp"
+#include "Core/Modulator.hpp"
 
 #include <stdexcept>
 

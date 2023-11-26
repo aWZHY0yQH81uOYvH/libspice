@@ -6,7 +6,7 @@
 #ifndef INTEGRATING_COMPONENT_HPP
 #define INTEGRATING_COMPONENT_HPP
 
-#include "Component.hpp"
+#include "Core/Component.hpp"
 
 class IntegratingComponent: public Component {
 protected:

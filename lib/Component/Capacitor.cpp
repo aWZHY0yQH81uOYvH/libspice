@@ -1,5 +1,5 @@
-#include "Capacitor.hpp"
-#include "Node.hpp"
+#include "Component/Capacitor.hpp"
+#include "Core/Node.hpp"
 
 Expression Capacitor::i_expr() const {
 	// I = C * dV/dt

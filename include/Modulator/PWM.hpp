@@ -5,7 +5,7 @@
 #ifndef PWM_HPP
 #define PWM_HPP
 
-#include "Modulator.hpp"
+#include "Core/Modulator.hpp"
 
 class PWM: public Modulator {
 private:

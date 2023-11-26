@@ -1,6 +1,6 @@
-#include "Node.hpp"
-#include "Circuit.hpp"
-#include "Component.hpp"
+#include "Core/Node.hpp"
+#include "Core/Circuit.hpp"
+#include "Core/Component.hpp"
 
 #include <stdexcept>
 

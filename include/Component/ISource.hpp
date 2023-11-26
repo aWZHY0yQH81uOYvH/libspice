@@ -5,7 +5,7 @@
 #ifndef ISOURCE_HPP
 #define ISOURCE_HPP
 
-#include "Component.hpp"
+#include "Core/Component.hpp"
 
 class ISource: public Component {
 	// Inherit constructor

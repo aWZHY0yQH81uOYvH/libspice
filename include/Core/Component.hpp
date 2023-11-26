@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "Circuit.hpp"
+#include "Core/Circuit.hpp"
 
 class Node;
 class Modulator;

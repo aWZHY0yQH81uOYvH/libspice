@@ -1,5 +1,5 @@
-#include "Sine.hpp"
-#include "Circuit.hpp"
+#include "Modulator/Sine.hpp"
+#include "Core/Circuit.hpp"
 
 #include <cmath>
 

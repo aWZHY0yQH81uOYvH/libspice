@@ -1,8 +1,8 @@
-#include "Circuit.hpp"
-#include "Node.hpp"
-#include "Component.hpp"
-#include "IntegratingComponent.hpp"
-#include "Modulator.hpp"
+#include "Core/Circuit.hpp"
+#include "Core/Node.hpp"
+#include "Core/Component.hpp"
+#include "Core/IntegratingComponent.hpp"
+#include "Core/Modulator.hpp"
 
 #include <stdexcept>
 #include <map>

@@ -5,7 +5,7 @@
 #ifndef INDUCTOR_HPP
 #define INDUCTOR_HPP
 
-#include "IntegratingComponent.hpp"
+#include "Core/IntegratingComponent.hpp"
 
 class Inductor: public IntegratingComponent {
 	// Inherit constructor

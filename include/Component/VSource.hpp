@@ -5,7 +5,7 @@
 #ifndef VSOURCE_HPP
 #define VSOURCE_HPP
 
-#include "Component.hpp"
+#include "Core/Component.hpp"
 
 class VSource: public Component {
 	// Inherit constructor

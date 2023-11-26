@@ -5,7 +5,7 @@
 #ifndef SINE_HPP
 #define SINE_HPP
 
-#include "Modulator.hpp"
+#include "Core/Modulator.hpp"
 
 class Sine: public Modulator {
 private:

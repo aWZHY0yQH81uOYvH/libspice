@@ -1,5 +1,5 @@
-#include "PWM.hpp"
-#include "Circuit.hpp"
+#include "Modulator/PWM.hpp"
+#include "Core/Circuit.hpp"
 
 PWM::PWM(Circuit *parent_circuit, double l_value, double h_value, double freq, double duty, double phase):
 	Modulator(parent_circuit), duty(duty), freq(freq), period(1/freq), phase(phase), phase_offset(phase/freq/360), l_value(l_value), h_value(h_value) {}

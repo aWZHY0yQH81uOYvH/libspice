@@ -5,7 +5,7 @@
 #ifndef CAPACITOR_HPP
 #define CAPACITOR_HPP
 
-#include "IntegratingComponent.hpp"
+#include "Core/IntegratingComponent.hpp"
 
 class Capacitor: public IntegratingComponent {
 	// Inherit constructor

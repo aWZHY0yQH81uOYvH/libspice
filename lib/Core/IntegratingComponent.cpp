@@ -1,6 +1,6 @@
-#include "IntegratingComponent.hpp"
+#include "Core/IntegratingComponent.hpp"
 
-#include "Circuit.hpp"
+#include "Core/Circuit.hpp"
 
 #include <stdexcept>
 
