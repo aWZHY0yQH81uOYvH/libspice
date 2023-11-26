@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <map>
 
 #include <Eigen/Core>
 
@@ -50,9 +51,7 @@ private:
 	std::vector<std::unique_ptr<Modulator>> modulators;
 	
 	// Circuit representation
-	// expr_mat is sparse so needs a helper function for easy access
 	std::map<std::pair<size_t, size_t>, Expression> expr_mat;
-	Expression &expr_mat_helper(size_t row, size_t col);
 	std::vector<Expression> expr_vec;
 	size_t n_vars;
 	
