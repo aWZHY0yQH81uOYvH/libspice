@@ -5,6 +5,8 @@
 
 #include <stdexcept>
 
+namespace spice {
+
 Component::Component(Circuit *c, double v): parent_circuit(c), value(v) {}
 
 Component::Component(Circuit *c, double v, Node *top, Node *bottom): Component(c, v) {
@@ -167,4 +169,6 @@ void Component::flip() {
 				conn.second ^= 1;
 				break;
 			}
+}
+
 }

@@ -4,6 +4,8 @@
 
 #include <stdexcept>
 
+namespace spice {
+
 Node::Node(Circuit *c): parent_circuit(c), fixed(false) {}
 
 Node::Node(Circuit *c, double v): parent_circuit(c), fixed(true), fixed_voltage(v), v(&fixed_voltage) {}
@@ -35,4 +37,6 @@ Component *Node::to(Component *c) {
 	// Current exiting this node
 	connections.emplace_back(c, false);
 	return c;
+}
+
 }

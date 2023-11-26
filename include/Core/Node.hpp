@@ -2,11 +2,12 @@
 	Class representing a node in a circuit
 */
 
-#ifndef NODE_HPP
-#define NODE_HPP
+#pragma once
 
 #include <utility>
 #include <vector>
+
+namespace spice {
 
 class Circuit;
 class Component;
@@ -55,4 +56,4 @@ public:
 	friend class Component;
 };
 
-#endif
+}

@@ -3,6 +3,8 @@
 
 #include <cmath>
 
+namespace spice {
+
 Sine::Sine(Circuit *parent_circuit, double freq, double amp, double dc_offset, double phase):
 	Modulator(parent_circuit), freq(freq), amp(amp), dc_offset(dc_offset), phase(phase) {}
 
@@ -15,4 +17,6 @@ void Sine::apply() {
 
 bool Sine::continuous() const {
 	return true;
+}
+
 }

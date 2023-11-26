@@ -10,6 +10,8 @@
 
 #include <gsl/gsl_errno.h>
 
+namespace spice {
+
 Circuit::Circuit(double min_ts, double max_ts, double max_e_abs, double max_e_rel, const gsl_odeiv2_step_type *stepper_type):
 	min_ts(min_ts), max_ts(max_ts), max_e_abs(max_e_abs), max_e_rel(max_e_rel), stepper_type(stepper_type) {
 	system.function = system_function;
@@ -531,4 +533,6 @@ void Circuit::sim_to_time(double stop) {
 	
 	// Update dt with new value for next time
 	if(dt) *dt = new_step;
+}
+
 }

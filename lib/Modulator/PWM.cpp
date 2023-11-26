@@ -1,6 +1,8 @@
 #include "Modulator/PWM.hpp"
 #include "Core/Circuit.hpp"
 
+namespace spice {
+
 PWM::PWM(Circuit *parent_circuit, double l_value, double h_value, double freq, double duty, double phase):
 	Modulator(parent_circuit), duty(duty), freq(freq), period(1/freq), phase(phase), phase_offset(phase/freq/360), l_value(l_value), h_value(h_value) {}
 
@@ -85,4 +87,6 @@ void PWM::set_phase(double p) {
 	phase = p;
 	phase_offset = period*phase/360;
 	cached_nct = 0;
+}
+
 }

@@ -2,8 +2,7 @@
 	Class representing an arbitrary circuit
 */
 
-#ifndef CIRCUIT_HPP
-#define CIRCUIT_HPP
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -22,6 +21,8 @@
 
 // "Small" for floating-point calculations
 #define EPSILON 1e-15
+
+namespace spice {
 
 class Node;
 class Component;
@@ -198,4 +199,4 @@ public:
 	friend class Component;
 };
 
-#endif
+}

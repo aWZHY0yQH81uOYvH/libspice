@@ -2,10 +2,11 @@
 	It's a current source
 */
 
-#ifndef ISOURCE_HPP
-#define ISOURCE_HPP
+#pragma once
 
 #include "Core/Component.hpp"
+
+namespace spice {
 
 class ISource: public Component {
 	// Inherit constructor
@@ -14,4 +15,4 @@ class ISource: public Component {
 	virtual Expression i_expr() const;
 };
 
-#endif
+}

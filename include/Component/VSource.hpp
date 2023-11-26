@@ -2,10 +2,11 @@
 	It's a voltage source
 */
 
-#ifndef VSOURCE_HPP
-#define VSOURCE_HPP
+#pragma once
 
 #include "Core/Component.hpp"
+
+namespace spice {
 
 class VSource: public Component {
 	// Inherit constructor
@@ -14,4 +15,4 @@ class VSource: public Component {
 	virtual Expression v_expr() const;
 };
 
-#endif
+}

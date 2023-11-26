@@ -2,10 +2,11 @@
 	It's a capacitor
 */
 
-#ifndef CAPACITOR_HPP
-#define CAPACITOR_HPP
+#pragma once
 
 #include "Core/IntegratingComponent.hpp"
+
+namespace spice {
 
 class Capacitor: public IntegratingComponent {
 	// Inherit constructor
@@ -19,4 +20,4 @@ class Capacitor: public IntegratingComponent {
 	virtual void gen_initial_cond();
 };
 
-#endif
+}

@@ -2,12 +2,13 @@
 	Generic circuit component base class
 */
 
-#ifndef COMPONENT_HPP
-#define COMPONENT_HPP
+#pragma once
 
 #include <vector>
 
 #include "Core/Circuit.hpp"
+
+namespace spice {
 
 class Node;
 class Modulator;
@@ -91,4 +92,4 @@ public:
 	friend class Node;
 };
 
-#endif
+}

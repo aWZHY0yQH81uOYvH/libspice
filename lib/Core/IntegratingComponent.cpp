@@ -4,6 +4,8 @@
 
 #include <stdexcept>
 
+namespace spice {
+
 IntegratingComponent::IntegratingComponent(Circuit *parent, double value):
 	Component(parent, value) {}
 
@@ -36,4 +38,6 @@ Expression IntegratingComponent::dydt_expr() const {
 
 bool IntegratingComponent::is_dynamic() const {
 	return true;
+}
+
 }

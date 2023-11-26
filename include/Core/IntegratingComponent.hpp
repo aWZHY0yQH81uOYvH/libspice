@@ -3,10 +3,11 @@
 	defined with differential equations
 */
 
-#ifndef INTEGRATING_COMPONENT_HPP
-#define INTEGRATING_COMPONENT_HPP
+#pragma once
 
 #include "Core/Component.hpp"
+
+namespace spice {
 
 class IntegratingComponent: public Component {
 protected:
@@ -36,4 +37,4 @@ public:
 	friend class Circuit;
 };
 
-#endif
+}

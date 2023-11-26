@@ -1,6 +1,8 @@
 #include "Component/Inductor.hpp"
 #include "Core/Node.hpp"
 
+namespace spice {
+
 Expression Inductor::i_expr() const {
 	// V = L * dI/dt
 	// V = IR
@@ -34,4 +36,6 @@ Expression Inductor::dydt_expr() const {
 
 void Inductor::gen_initial_cond() {
 	initial_cond = i;
+}
+
 }

@@ -2,6 +2,8 @@
 
 #include <limits>
 
+namespace spice {
+
 Modulator::Modulator(Circuit *parent_circuit): parent_circuit(parent_circuit) {}
 
 void Modulator::reset() {}
@@ -14,4 +16,6 @@ bool Modulator::continuous() const {
 
 double Modulator::next_change_time() {
 	return std::numeric_limits<double>::max();
+}
+
 }

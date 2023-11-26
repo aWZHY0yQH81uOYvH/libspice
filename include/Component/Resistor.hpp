@@ -2,10 +2,11 @@
 	It's a resistor
 */
 
-#ifndef RESISTOR_HPP
-#define RESISTOR_HPP
+#pragma once
 
 #include "Core/Component.hpp"
+
+namespace spice {
 
 class Resistor: public Component {
 	// Inherit constructor
@@ -14,4 +15,4 @@ class Resistor: public Component {
 	virtual Expression i_expr() const;
 };
 
-#endif
+}

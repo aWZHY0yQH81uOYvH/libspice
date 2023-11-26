@@ -2,10 +2,11 @@
 	PWM generator
 */
 
-#ifndef PWM_HPP
-#define PWM_HPP
+#pragma once
 
 #include "Core/Modulator.hpp"
+
+namespace spice {
 
 class PWM: public Modulator {
 private:
@@ -54,4 +55,4 @@ public:
 	friend class Circuit;
 };
 
-#endif
+}

@@ -2,6 +2,8 @@
 
 #include "SPICE.hpp"
 
+using namespace spice;
+
 int main() {
 	Circuit c;
 	

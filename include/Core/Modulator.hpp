@@ -2,11 +2,12 @@
 	A generic object that will automatically control circuit components' values
 */
 
-#ifndef MODULATOR_HPP
-#define MODULATOR_HPP
+#pragma once
 
 #include <vector>
 #include <utility>
+
+namespace spice {
 
 class Circuit;
 
@@ -41,4 +42,4 @@ public:
 	friend class Component;
 };
 
-#endif
+}

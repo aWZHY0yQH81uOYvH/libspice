@@ -2,10 +2,11 @@
 	Modulate circuit parameters with a sine wave
 */
 
-#ifndef SINE_HPP
-#define SINE_HPP
+#pragma once
 
 #include "Core/Modulator.hpp"
+
+namespace spice {
 
 class Sine: public Modulator {
 private:
@@ -23,4 +24,4 @@ public:
 	friend class Circuit;
 };
 
-#endif
+}

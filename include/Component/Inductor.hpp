@@ -2,10 +2,11 @@
 	It's an inductor
 */
 
-#ifndef INDUCTOR_HPP
-#define INDUCTOR_HPP
+#pragma once
 
 #include "Core/IntegratingComponent.hpp"
+
+namespace spice {
 
 class Inductor: public IntegratingComponent {
 	// Inherit constructor
@@ -19,4 +20,4 @@ class Inductor: public IntegratingComponent {
 	virtual void gen_initial_cond();
 };
 
-#endif
+}

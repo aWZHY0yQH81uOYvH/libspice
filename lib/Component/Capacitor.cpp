@@ -1,6 +1,8 @@
 #include "Component/Capacitor.hpp"
 #include "Core/Node.hpp"
 
+namespace spice {
+
 Expression Capacitor::i_expr() const {
 	// I = C * dV/dt
 	// I = V/R
@@ -37,4 +39,6 @@ Expression Capacitor::dydt_expr() const {
 
 void Capacitor::gen_initial_cond() {
 	initial_cond = v;
+}
+
 }
