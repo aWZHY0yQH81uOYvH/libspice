@@ -20,8 +20,8 @@ private:
 	size_t ind;
 	
 	// For nodes to be kept at a constant voltage
-	bool fixed;
-	double fixed_voltage;
+	const bool fixed;
+	const double fixed_voltage = 0;
 	
 	// List of components connected to this node, and corresponding current directions
 	std::vector<std::pair<Component*, bool>> connections;

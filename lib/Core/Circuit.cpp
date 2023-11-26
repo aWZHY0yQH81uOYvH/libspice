@@ -240,7 +240,7 @@ void Circuit::gen_matrix(bool dc) {
 		if(n->fixed) {
 			// 1 * node voltage = fixed value
 			expr_mat[{node_ind, node_ind}].push_back({1.0, {}, {}});
-			expr_vec[node_ind].push_back({*n->v, {}, {}});
+			expr_vec[node_ind].push_back({n->fixed_voltage, {}, {}});
 		}
 		
 		// Node is free to move; add currents to do KCL
@@ -432,6 +432,8 @@ void Circuit::sim_to_time(double stop) {
 	
 	double new_step = dt ? *dt : max_ts;
 	
+	bool solution_updated = false;
+	
 	while(t + EPSILON < stop) {
 		double save_time = next_save_time();
 		
@@ -518,11 +520,14 @@ void Circuit::sim_to_time(double stop) {
 		// Run modulators
 		for(auto &m:modulators)
 			m->apply();
+		
+		solution_updated = true;
 	}
 	
 	// Update component object voltages and currents for user to access
-	for(auto &c:components)
-		update_component(c.get());
+	if(solution_updated)
+		for(auto &c:components)
+			update_component(c.get());
 	
 	// Update dt with new value for next time
 	if(dt) *dt = new_step;
