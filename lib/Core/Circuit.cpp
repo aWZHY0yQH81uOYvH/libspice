@@ -107,9 +107,36 @@ bool Circuit::epsilon_equals(double x, double y) {
 }
 
 // Return the next time we need to save
-double Circuit::next_save_time() {
+double Circuit::next_save_time() const {
 	if(save_period) return (epsilon_floor(t/save_period) + 1)*save_period;
 	return std::numeric_limits<double>::max();
+}
+
+// Return the next time a modulator changes state
+double Circuit::next_modulator_time() const {
+	double earliest = std::numeric_limits<double>::max();
+	
+	for(auto &m:modulators) {
+		const double mod_change_time = m->next_change_time();
+		if(mod_change_time < earliest)
+			earliest = mod_change_time;
+	}
+	
+	return earliest;
+}
+
+// Return the next time step length
+double Circuit::next_step_duration() const {
+	return std::max({min_ts,
+	       std::min({max_ts,
+	                 dt ? *dt : max_ts,
+	                 next_save_time() - t,
+	                 next_modulator_time() - t})});
+}
+
+// Return the next time we will step to
+double Circuit::next_step_time() const {
+	return t + next_step_duration();
 }
 
 const std::vector<double> &Circuit::save_times() {
@@ -432,29 +459,20 @@ void Circuit::sim_to_time(double stop) {
 			m->apply();
 	}
 	
-	double new_step = dt ? *dt : max_ts;
+	double step = dt ? *dt : max_ts;
 	
 	bool solution_updated = false;
 	
 	while(t + EPSILON < stop) {
-		double save_time = next_save_time();
+		const double save_time = next_save_time();
+		const double forced_end_time = std::min(save_time, next_modulator_time());
+		step = next_step_duration();
 		
-		// TODO: add calculation for modulators
-		
-		// Step to the soonest event
-		double forced_end_time = std::min(save_time, stop);
-		for(auto &m:modulators) {
-			double mod_change_time = m->next_change_time();
-			if(mod_change_time < forced_end_time)
-				forced_end_time = mod_change_time;
-		}
-		new_step = std::max(min_ts,
-		           std::min({max_ts,
-		                     new_step,
-							 forced_end_time - t}));
+		if(t + step > stop)
+			step = stop - t;
 		
 		if(system.dimension) {
-			*dt = new_step;
+			*dt = step;
 			
 			// Step diff EQs manually so we can get access to intermediate timesteps
 			// (instead of using driver functions); essentially re-create gsl_odeiv2_evolve_apply
@@ -488,7 +506,7 @@ void Circuit::sim_to_time(double stop) {
 			if(step_status == GSL_SUCCESS) {
 				e->count++;
 				t += *dt;
-				gsl_odeiv2_control_hadjust(driver->c, driver->s, y, e->yerr, e->dydt_out, &new_step);
+				gsl_odeiv2_control_hadjust(driver->c, driver->s, y, e->yerr, e->dydt_out, dt);
 			}
 			
 			// If step didn't succeed, try halving the timestep
@@ -499,7 +517,7 @@ void Circuit::sim_to_time(double stop) {
 				if(*dt == min_ts)
 					throw std::runtime_error("System does not converge at min timestep");
 				
-				new_step = *dt/2;
+				*dt /= 2;
 				
 				// Reset y
 				memcpy(y, e->y0, sizeof(double)*system.dimension);
@@ -532,7 +550,7 @@ void Circuit::sim_to_time(double stop) {
 			update_component(c.get());
 	
 	// Update dt with new value for next time
-	if(dt) *dt = new_step;
+	if(dt) *dt = step;
 }
 
 }

@@ -160,7 +160,14 @@ public:
 	const std::vector<double> &save_times();
 	
 	// Next save time
-	double next_save_time();
+	double next_save_time() const;
+	
+	// Next modulator change time
+	double next_modulator_time() const;
+	
+	// Next step that will be taken in sim_to_time
+	double next_step_duration() const;
+	double next_step_time() const;
 	
 	// Save states of all components and nodes (if enabled)
 	void save_states(bool dc = false);
