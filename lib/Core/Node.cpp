@@ -35,7 +35,7 @@ Component *Node::to(Component *c) {
 	c->node_top = this;
 	
 	// Current exiting this node
-	connections.emplace_back(c, false);
+	connections[c] = false;
 	return c;
 }
 

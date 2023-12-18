@@ -228,13 +228,14 @@ void Circuit::gen_matrix(bool dc) {
 	
 	// TODO: figure out when to reset driver
 	
+	// Count how many IntegratingComponents we have and give them indicies
+	// Also allocate space for diff EQ state variables and initialize to initial states
+	// already stored in component objects
+	system.dimension = 0;
+	int_comp_map.clear();
+	deq_state.clear();
+	
 	if(!dc) {
-		// Count how many IntegratingComponents we have and give them indicies
-		// Also allocate space for diff EQ state variables and initialize to initial states
-		// already stored in component objects
-		system.dimension = 0;
-		int_comp_map.clear();
-		deq_state.clear();
 		for(auto &c:components) {
 			IntegratingComponent *ic_ptr = dynamic_cast<IntegratingComponent*>(c.get());
 			if(ic_ptr) {
@@ -350,7 +351,7 @@ void Circuit::update_matrix() {
 	
 	eval_mat.setZero();
 	for(auto &expr:expr_mat)
-		eval_mat.insert(expr.first.first, expr.first.second) = eval_expr(expr.second);
+		eval_mat.insert(expr.first.row, expr.first.col) = eval_expr(expr.second);
 	
 	for(size_t row=0; row<n_vars; row++)
 		eval_vec[row] = eval_expr(expr_vec[row]);

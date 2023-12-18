@@ -6,6 +6,7 @@
 
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 namespace spice {
 
@@ -25,7 +26,7 @@ private:
 	const double fixed_voltage = 0;
 	
 	// List of components connected to this node, and corresponding current directions
-	std::vector<std::pair<Component*, bool>> connections;
+	std::unordered_map<Component*, bool> connections;
 	
 	// Voltage history
 	std::vector<double> _v_hist;

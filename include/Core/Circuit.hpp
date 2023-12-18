@@ -7,7 +7,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include <map>
+#include <unordered_map>
 
 #include <Eigen/Core>
 
@@ -52,7 +52,22 @@ private:
 	std::vector<std::unique_ptr<Modulator>> modulators;
 	
 	// Circuit representation
-	std::map<std::pair<size_t, size_t>, Expression> expr_mat;
+	struct Coordinate {
+		size_t row, col;
+		
+		bool operator==(const Coordinate &other) const {
+			return row == other.row && col == other.col;
+		}
+	};
+	
+	struct CoordinateHash {
+		size_t operator()(const Coordinate &c) const {
+			std::hash<size_t> hasher;
+			return hasher(c.row) ^ hasher(~c.col);
+		}
+	};
+	
+	std::unordered_map<Coordinate, Expression, CoordinateHash> expr_mat;
 	std::vector<Expression> expr_vec;
 	size_t n_vars;
 	
@@ -65,10 +80,10 @@ private:
 	void update_component(Component *c, bool dc = false);
 	
 	// Map of variable indicies that correspond to voltage sources
-	std::map<Component*, size_t> vsource_map;
+	std::unordered_map<Component*, size_t> vsource_map;
 	
 	// Map of node voltage pointers to node indicies
-	std::map<const double*, size_t> node_map;
+	std::unordered_map<const double*, size_t> node_map;
 	
 	// Evaluate expressions used in circuit representation
 	static double eval_expr(const Expression &e);
@@ -114,7 +129,7 @@ private:
 	static int system_function(double t, const double y[], double dydt[], void *params);
 	
 	// Map of IntegratingComponents to their indicies in the GSL system
-	std::map<IntegratingComponent*, size_t> int_comp_map;
+	std::unordered_map<IntegratingComponent*, size_t> int_comp_map;
 	
 	// Times when a save was performed
 	std::vector<double> _save_times;

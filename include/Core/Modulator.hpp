@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <vector>
+#include <unordered_map>
 #include <utility>
 
 namespace spice {
@@ -18,7 +18,7 @@ protected:
 	Modulator(Circuit *parent_circuit);
 	
 	// List of variables that we control and flags for each
-	std::vector<std::pair<double*, int>> controlled;
+	std::unordered_map<double*, int> controlled;
 	
 	// Reset any internal state
 	virtual void reset();

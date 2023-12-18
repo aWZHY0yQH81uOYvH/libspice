@@ -46,16 +46,12 @@ void Component::set_value(double v) {
 void Component::set_value(Modulator *m, int flags) {
 	remove_mod();
 	mod = m;
-	mod->controlled.emplace_back(&value, flags);
+	mod->controlled[&value] = flags;
 }
 
 void Component::remove_mod() {
 	if(mod) {
-		for(auto it = mod->controlled.begin(); it != mod->controlled.end(); it++)
-			if(it->first == &value) {
-				mod->controlled.erase(it);
-				break;
-			}
+		mod->controlled.erase(&value);
 		mod = NULL;
 	}
 }
@@ -135,7 +131,7 @@ Node *Component::to(Node *n) {
 	node_bottom = n;
 	
 	// Current entering the node
-	n->connections.emplace_back(this, true);
+	n->connections[this] = true;
 	return n;
 }
 
@@ -157,18 +153,10 @@ void Component::flip() {
 	
 	// Also update node references to us
 	if(node_bottom)
-		for(auto &conn:node_bottom->connections)
-			if(conn.first == this) {
-				conn.second ^= 1;
-				break;
-			}
+		node_bottom->connections[this] ^= 1;
 
 	if(node_top)
-		for(auto &conn:node_top->connections)
-			if(conn.first == this) {
-				conn.second ^= 1;
-				break;
-			}
+		node_top->connections[this] ^= 1;
 }
 
 }
