@@ -14,9 +14,9 @@ Expression Inductor::tran_i_expr() const {
 	// Current source in parallel with a resistor
 	//   Isource is old inductor current
 	//   R = L/dt
-	return {{ 1, {this->var}, {}},
-	        { 1, {node_top->v, parent_circuit->dt}, {&this->value}},
-	        {-1, {node_bot->v, parent_circuit->dt}, {&this->value}}};
+	return {{ 1, {this->var}},
+	        { 1, {node_top->v(), parent_circuit->dt()}, {&this->value}},
+	        {-1, {node_bot->v(), parent_circuit->dt()}, {&this->value}}};
 }
 
 Expression Inductor::dc_v_expr() const {
@@ -35,8 +35,8 @@ Expression Inductor::dc_i_expr() const {
 
 Expression Inductor::dydt_expr() const {
 	// dI/dt = V/L
-	return {{ 1, {node_top->v}, {&this->value}},
-	        {-1, {node_bot->v}, {&this->value}}};
+	return {{ 1, {node_top->v()}, {&this->value}},
+	        {-1, {node_bot->v()}, {&this->value}}};
 }
 
 void Inductor::gen_initial_cond() {

@@ -72,6 +72,11 @@ double Circuit::time() const {
 	return t;
 }
 
+// Get pointer to internal time step
+const double *Circuit::dt() const {
+	return _dt;
+}
+
 // Floor function that handles floating point imprecision
 long Circuit::epsilon_floor(double x) {
 	long normal_floor = x;
@@ -107,7 +112,7 @@ double Circuit::next_modulator_time() const {
 double Circuit::next_step_duration() const {
 	return std::max({min_ts,
 	       std::min({max_ts,
-	                 dt ? *dt : max_ts,
+	                 _dt ? *_dt : max_ts,
 	                 next_save_time() - t,
 	                 next_modulator_time() - t})});
 }
@@ -149,7 +154,7 @@ void Circuit::apply_modulators() {
 // Return the index of the node in solved_vec given the node itself or its evaluation variable reference
 // Return -1 if it doesn't exist
 ssize_t Circuit::node_index(const Node *node) const {
-	return node_index(node->v);
+	return node_index(node->v());
 }
 
 ssize_t Circuit::node_index(const double *var) const {
@@ -198,11 +203,11 @@ void Circuit::gen_matrix() {
 	
 	dydt_exprs.resize(system.dimension);
 	deq_state.resize(system.dimension);
-	dt = nullptr;
+	_dt = nullptr;
 	
 	// Set each node's voltage reference to the corresponding variable in solved_vec
 	for(size_t ind = 0; ind < n_nodes; ind++)
-		nodes[ind]->v = &solved_vec[ind];
+		nodes[ind]->_v = &solved_vec[ind];
 	
 	if(simulation_mode == TRANSIENT_ANALYSIS && system.dimension) {
 		// Allocate diff EQ driver
@@ -214,8 +219,8 @@ void Circuit::gen_matrix() {
 		
 		gsl_odeiv2_driver_set_hmin(driver, min_ts);
 		gsl_odeiv2_driver_set_hmax(driver, max_ts);
-		dt = &driver->h;
-		*dt = max_ts;
+		_dt = &driver->h;
+		*_dt = max_ts;
 		
 		// Initialize integrator state vector to initial conditions stored in components
 		// and set each IntegratingComponent's integration variable reference
@@ -231,7 +236,7 @@ void Circuit::gen_matrix() {
 	// Create voltage and current expressions for all TwoTerminalComponents
 	for_component_type<TwoTerminalComponent>([&](TwoTerminalComponent *ttc) {
 		// Voltage is always difference between top and bottom node voltages
-		ttc->circuit_v_expr = {{ttc->node_top->v}, {-1.0, {ttc->node_bot->v}}};
+		ttc->circuit_v_expr = {{ttc->node_top->v()}, {-1.0, {ttc->node_bot->v()}}};
 		
 		// Current is just the current expression, unless the component is voltage-defined and has its own current variable
 		auto vi = vsource_map.find(ttc);
@@ -416,7 +421,7 @@ void Circuit::sim_to_time(double stop) {
 		apply_modulators();
 	}
 	
-	double step = dt ? *dt : max_ts;
+	double step = _dt ? *_dt : max_ts;
 	
 	while(t + EPSILON < stop) {
 		const double save_time = next_save_time();
@@ -427,7 +432,7 @@ void Circuit::sim_to_time(double stop) {
 			step = stop - t;
 		
 		if(system.dimension) {
-			*dt = step;
+			*_dt = step;
 			
 			// Step diff EQs manually so we can get access to intermediate timesteps
 			// (instead of using driver functions); essentially re-create gsl_odeiv2_evolve_apply
@@ -446,12 +451,12 @@ void Circuit::sim_to_time(double stop) {
 					memcpy(e->dydt_in, e->dydt_out, sizeof(double)*system.dimension);
 				
 				// Apply step
-				step_status = gsl_odeiv2_step_apply(driver->s, t, *dt, y, e->yerr, e->dydt_in, e->dydt_out, &system);
+				step_status = gsl_odeiv2_step_apply(driver->s, t, *_dt, y, e->yerr, e->dydt_in, e->dydt_out, &system);
 			}
 			
 			// Just apply step otherwise
 			else
-				step_status = gsl_odeiv2_step_apply(driver->s, t, *dt, y, e->yerr, nullptr, e->dydt_out, &system);
+				step_status = gsl_odeiv2_step_apply(driver->s, t, *_dt, y, e->yerr, nullptr, e->dydt_out, &system);
 			
 			if(step_status == GSL_EFAULT)
 				throw std::runtime_error("gsl_odeiv2_step_apply returned EFAULT");
@@ -460,8 +465,8 @@ void Circuit::sim_to_time(double stop) {
 			// to possibly adjust the step for the next time
 			if(step_status == GSL_SUCCESS) {
 				e->count++;
-				t += *dt;
-				gsl_odeiv2_control_hadjust(driver->c, driver->s, y, e->yerr, e->dydt_out, dt);
+				t += *_dt;
+				gsl_odeiv2_control_hadjust(driver->c, driver->s, y, e->yerr, e->dydt_out, _dt);
 			}
 			
 			// If step didn't succeed, try halving the timestep
@@ -469,10 +474,10 @@ void Circuit::sim_to_time(double stop) {
 				e->failed_steps++;
 				
 				// Can't make dt any smaller
-				if(*dt == min_ts)
+				if(*_dt == min_ts)
 					throw std::runtime_error("System does not converge at min timestep");
 				
-				*dt /= 2;
+				*_dt /= 2;
 				
 				// Reset y
 				memcpy(y, e->y0, sizeof(double)*system.dimension);
@@ -497,7 +502,7 @@ void Circuit::sim_to_time(double stop) {
 	}
 	
 	// Update dt with new value for next time
-	if(dt) *dt = step;
+	if(_dt) *_dt = step;
 }
 
 }

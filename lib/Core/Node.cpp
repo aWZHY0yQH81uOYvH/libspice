@@ -8,7 +8,7 @@ namespace spice {
 
 Node::Node(Circuit *c): parent_circuit(c), fixed(false) {}
 
-Node::Node(Circuit *c, double v): parent_circuit(c), fixed(true), fixed_voltage(v), v(&fixed_voltage) {}
+Node::Node(Circuit *c, double v): parent_circuit(c), fixed(true), fixed_voltage(v), _v(&fixed_voltage) {}
 
 const std::vector<double> &Node::v_hist() {
 	return _v_hist;
@@ -18,8 +18,12 @@ void Node::save_hist() {
 	_v_hist.push_back(voltage());
 }
 
-double Node::voltage() {
-	return v ? *v : 0;
+const double *Node::v() const {
+	return _v;
+}
+
+double Node::voltage() const {
+	return *_v;
 }
 
 TwoTerminalComponent *Node::to(TwoTerminalComponent *c) {

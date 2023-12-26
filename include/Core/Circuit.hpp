@@ -100,6 +100,9 @@ private:
 	// Time
 	double t;
 	
+	// Time step (dynamic, will point into driver object)
+	double *_dt = nullptr;
+	
 	// Timestep limits
 	const double min_ts, max_ts;
 	
@@ -186,6 +189,9 @@ public:
 	// Get current time
 	double time() const;
 	
+	// Get pointer to internal time step
+	const double *dt() const;
+	
 	// Simulate
 	void sim_to_time(double stop);
 	
@@ -200,10 +206,6 @@ public:
 	
 	// Indicate that the circuit topology has changed so the matrix needs to be re-generated
 	void topology_changed();
-	
-	// Timestep (dynamic, will point into driver object)
-	// TODO: figure out how to make private or read only?
-	double *dt = nullptr;
 	
 	// Inexact floor function
 	static long epsilon_floor(double x);

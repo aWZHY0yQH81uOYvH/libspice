@@ -28,6 +28,9 @@ private:
 	// Voltage history
 	std::vector<double> _v_hist;
 	
+	// Current voltage
+	const double *_v = nullptr;
+	
 	// Disconnected node
 	Node(Circuit *c);
 	
@@ -44,8 +47,8 @@ public:
 	bool auto_save = false;
 	
 	// Current voltage
-	const double *v = nullptr; // TODO: find a way to make this private? needs to be public for component derived classes
-	double voltage();
+	const double *v() const;
+	double voltage() const;
 	
 	// For connecting to components
 	TwoTerminalComponent *to(TwoTerminalComponent *c);

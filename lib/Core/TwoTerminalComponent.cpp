@@ -71,15 +71,15 @@ void TwoTerminalComponent::clear_hist() {
 	_i_hist.clear();
 }
 
-double TwoTerminalComponent::voltage() {
+double TwoTerminalComponent::voltage() const {
 	return circuit_v_expr.eval();
 }
 
-double TwoTerminalComponent::current() {
+double TwoTerminalComponent::current() const {
 	return circuit_i_expr.eval();
 }
 
-double TwoTerminalComponent::power() {
+double TwoTerminalComponent::power() const {
 	return voltage() * current();
 }
 

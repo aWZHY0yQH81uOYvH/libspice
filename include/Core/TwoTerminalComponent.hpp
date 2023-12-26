@@ -79,9 +79,9 @@ public:
 	virtual void clear_hist();
 	
 	// Current voltage and current values
-	double voltage();
-	double current();
-	double power();
+	double voltage() const;
+	double current() const;
+	double power() const;
 	
 	// Connecting to a node
 	Node *to(Node *n);
