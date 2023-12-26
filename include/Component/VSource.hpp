@@ -4,15 +4,15 @@
 
 #pragma once
 
-#include "Core/Component.hpp"
+#include "Core/TwoTerminalComponent.hpp"
 
 namespace spice {
 
-class VSource: public Component {
+class VSource: public TwoTerminalComponent {
 	// Inherit constructor
-	using Component::Component;
+	using TwoTerminalComponent::TwoTerminalComponent;
 	
-	virtual Expression v_expr() const;
+	virtual Expression dc_v_expr() const;
 };
 
 }

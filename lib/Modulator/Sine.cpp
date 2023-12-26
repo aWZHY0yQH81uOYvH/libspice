@@ -12,7 +12,6 @@ void Sine::apply() {
 	double value = amp*sin(2*M_PI*freq*parent_circuit->time() + phase*M_PI/180) + dc_offset;
 	for(auto &c:controlled)
 		*c.first = value;
-	parent_circuit->needs_update();
 }
 
 bool Sine::continuous() const {

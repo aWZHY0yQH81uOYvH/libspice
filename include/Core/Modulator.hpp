@@ -39,7 +39,7 @@ public:
 	virtual double next_change_time();
 	
 	friend class Circuit;
-	friend class Component;
+	friend class TwoTerminalComponent;
 };
 
 }

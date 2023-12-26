@@ -5,14 +5,14 @@
 
 #pragma once
 
-#include "Core/Component.hpp"
+#include "Core/TwoTerminalComponent.hpp"
 
 namespace spice {
 
-class IntegratingComponent: public Component {
+class IntegratingComponent: public TwoTerminalComponent {
 protected:
 	// Variable for integration
-	const double *var = NULL;
+	const double *var = nullptr;
 	double initial_cond = 0;
 	
 	// DC solution will be used to set initial_cond if false
@@ -23,8 +23,6 @@ protected:
 	
 	// Expression to be integrated to find var
 	virtual Expression dydt_expr() const;
-	
-	virtual bool is_dynamic() const;
 
 public:
 	IntegratingComponent(Circuit *parent, double value);

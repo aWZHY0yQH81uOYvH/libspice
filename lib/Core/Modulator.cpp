@@ -4,7 +4,9 @@
 
 namespace spice {
 
-Modulator::Modulator(Circuit *parent_circuit): parent_circuit(parent_circuit) {}
+Modulator::Modulator(Circuit *parent_circuit): parent_circuit(parent_circuit) {
+	reset();
+}
 
 void Modulator::reset() {}
 

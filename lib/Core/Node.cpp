@@ -1,6 +1,6 @@
 #include "Core/Node.hpp"
 #include "Core/Circuit.hpp"
-#include "Core/Component.hpp"
+#include "Core/TwoTerminalComponent.hpp"
 
 #include <stdexcept>
 
@@ -15,14 +15,14 @@ const std::vector<double> &Node::v_hist() {
 }
 
 void Node::save_hist() {
-	_v_hist.push_back(v ? *v : 0);
+	_v_hist.push_back(voltage());
 }
 
 double Node::voltage() {
 	return v ? *v : 0;
 }
 
-Component *Node::to(Component *c) {
+TwoTerminalComponent *Node::to(TwoTerminalComponent *c) {
 	if(parent_circuit != c->parent_circuit)
 		throw std::invalid_argument("Component not in the same circuit");
 	

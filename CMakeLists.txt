@@ -24,9 +24,11 @@ link_directories(
 # Source files
 
 set(LIB_SOURCES
+	lib/Core/Expression.cpp
 	lib/Core/Circuit.cpp
 	lib/Core/Node.cpp
 	lib/Core/Component.cpp
+	lib/Core/TwoTerminalComponent.cpp
 	lib/Core/IntegratingComponent.cpp
 	lib/Core/Modulator.cpp
 	
@@ -41,9 +43,11 @@ set(LIB_SOURCES
 )
 
 set(LIB_HEADERS
+	include/Core/Expression.hpp
 	include/Core/Circuit.hpp
 	include/Core/Node.hpp
 	include/Core/Component.hpp
+	include/Core/TwoTerminalComponent.hpp
 	include/Core/IntegratingComponent.hpp
 	include/Core/Modulator.hpp
 	

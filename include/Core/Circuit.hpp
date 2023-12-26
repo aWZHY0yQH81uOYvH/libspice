@@ -4,10 +4,13 @@
 
 #pragma once
 
+#include "Core/Expression.hpp"
+
 #include <vector>
 #include <memory>
 #include <utility>
 #include <unordered_map>
+#include <functional>
 
 #include <Eigen/Core>
 
@@ -26,19 +29,9 @@ namespace spice {
 
 class Node;
 class Component;
+class TwoTerminalComponent;
 class IntegratingComponent;
 class Modulator;
-
-// A "term" can hold a multiplier and references to a
-// fractional component. All are multiplied together.
-typedef struct {
-	double coeff;
-	std::vector<const double *> num;
-	std::vector<const double *> den;
-} Term;
-
-// Sum of multiple terms
-typedef std::vector<Term> Expression;
 
 class Circuit {
 private:
@@ -71,22 +64,27 @@ private:
 	std::vector<Expression> expr_vec;
 	size_t n_vars;
 	
+	// Helper function to iterate over components of a certain dynamic type
+	template<typename T> void for_component_type(std::function<void(T*)> func) {
+		for(auto &c:components) {
+			T *comp_type = dynamic_cast<T*>(c.get());
+			if(comp_type)
+				func(comp_type);
+		}
+	}
+	
 	// Generate, update, or solve circuit matrix
-	void gen_matrix(bool dc = false);
+	void gen_matrix();
 	void update_matrix();
 	void solve_matrix();
 	
-	// Update voltage and current inside a component from solved values
-	void update_component(Component *c, bool dc = false);
+	// Run apply() for all modulators
+	void apply_modulators();
 	
-	// Map of variable indicies that correspond to voltage sources
-	std::unordered_map<Component*, size_t> vsource_map;
-	
-	// Map of node voltage pointers to node indicies
-	std::unordered_map<const double*, size_t> node_map;
-	
-	// Evaluate expressions used in circuit representation
-	static double eval_expr(const Expression &e);
+	// Return the index of the node in solved_vec given the node itself or its evaluation variable reference
+	// Return -1 if it doesn't exist
+	ssize_t node_index(const Node *node) const;
+	ssize_t node_index(const double *var) const;
 	
 	// Evaluated circuit representation matrix
 	Eigen::SparseMatrix<double> eval_mat;
@@ -96,28 +94,23 @@ private:
 	// Eigen solver
 	Eigen::SparseLU<Eigen::SparseMatrix<double>> mat_solver;
 	
-	// If we need to re-generate or update the matrix
+	// If we need to re-generate the matrix
 	bool gen_matrix_pend = true;
-	enum {
-		NEVER,
-		ONCE,
-		ALWAYS
-	} update_matrix_pend = ONCE;
 	
 	// Time
 	double t;
 	
 	// Timestep limits
-	double min_ts, max_ts;
+	const double min_ts, max_ts;
 	
 	// Absolute error and relative error
-	double max_e_abs, max_e_rel;
+	const double max_e_abs, max_e_rel;
 	
 	// ODE solver algorithm
-	const gsl_odeiv2_step_type *stepper_type;
+	const gsl_odeiv2_step_type * const stepper_type;
 	
 	// GSL diff EQ solver driver object
-	gsl_odeiv2_driver *driver = NULL;
+	gsl_odeiv2_driver *driver = nullptr;
 	
 	// GSL diff EQ solver system
 	gsl_odeiv2_system system;
@@ -125,11 +118,11 @@ private:
 	// Diff EQ state
 	std::vector<double> deq_state;
 	
+	// dydt expressions
+	std::vector<Expression> dydt_exprs;
+	
 	// Diff EQ system evaluation function
 	static int system_function(double t, const double y[], double dydt[], void *params);
-	
-	// Map of IntegratingComponents to their indicies in the GSL system
-	std::unordered_map<IntegratingComponent*, size_t> int_comp_map;
 	
 	// Times when a save was performed
 	std::vector<double> _save_times;
@@ -185,31 +178,32 @@ public:
 	double next_step_time() const;
 	
 	// Save states of all components and nodes (if enabled)
-	void save_states(bool dc = false);
+	void save_states();
 	
 	// Reset everything
 	void reset();
 	
 	// Get current time
-	double time();
+	double time() const;
 	
 	// Simulate
 	void sim_to_time(double stop);
 	
 	// DC solution for generating steady-state
-	bool dc_solution_pend = true;
 	void compute_dc_solution();
 	
-	// Indicate that something has changed and the circuit matrix needs to be re-evaluated
-	// Shouldn't need to be called by user code
-	void needs_update();
+	// Simulation mode which controls how components are represented
+	enum {
+		DC_ANALYSIS,
+		TRANSIENT_ANALYSIS
+	} simulation_mode = DC_ANALYSIS;
 	
 	// Indicate that the circuit topology has changed so the matrix needs to be re-generated
 	void topology_changed();
 	
 	// Timestep (dynamic, will point into driver object)
 	// TODO: figure out how to make private or read only?
-	double *dt = NULL;
+	double *dt = nullptr;
 	
 	// Inexact floor function
 	static long epsilon_floor(double x);
@@ -218,7 +212,6 @@ public:
 	static bool epsilon_equals(double x, double y);
 	
 	friend class Node;
-	friend class Component;
 };
 
 }

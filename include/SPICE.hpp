@@ -2,9 +2,11 @@
 	All header files
 */
 
+#include "Core/Expression.hpp"
 #include "Core/Circuit.hpp"
 #include "Core/Node.hpp"
 #include "Core/Component.hpp"
+#include "Core/TwoTerminalComponent.hpp"
 #include "Core/IntegratingComponent.hpp"
 #include "Core/Modulator.hpp"
 

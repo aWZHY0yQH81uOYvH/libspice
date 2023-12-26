@@ -2,7 +2,7 @@
 
 namespace spice {
 
-Expression ISource::i_expr() const {
+Expression ISource::dc_i_expr() const {
 	return {{1, {&this->value}, {}}};
 }
 

@@ -11,22 +11,19 @@
 namespace spice {
 
 class Circuit;
-class Component;
+class TwoTerminalComponent;
 
 class Node {
 private:
 	// Circuit we're part of
 	Circuit *parent_circuit;
 	
-	// Index in parent circuit's array
-	size_t ind;
-	
 	// For nodes to be kept at a constant voltage
 	const bool fixed;
 	const double fixed_voltage = 0;
 	
 	// List of components connected to this node, and corresponding current directions
-	std::unordered_map<Component*, bool> connections;
+	std::unordered_map<TwoTerminalComponent*, bool> connections;
 	
 	// Voltage history
 	std::vector<double> _v_hist;
@@ -47,14 +44,14 @@ public:
 	bool auto_save = false;
 	
 	// Current voltage
-	const double *v = NULL; // TODO: find a way to make this private? needs to be public for component derived classes
+	const double *v = nullptr; // TODO: find a way to make this private? needs to be public for component derived classes
 	double voltage();
 	
 	// For connecting to components
-	Component *to(Component *c);
+	TwoTerminalComponent *to(TwoTerminalComponent *c);
 	
 	friend class Circuit;
-	friend class Component;
+	friend class TwoTerminalComponent;
 };
 
 }

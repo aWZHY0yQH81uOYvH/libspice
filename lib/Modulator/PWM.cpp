@@ -27,7 +27,6 @@ bool PWM::continuous() const {
 void PWM::_apply(bool state) {
 	for(auto &c:controlled)
 		*c.first = state ^ (c.second & Inverted) ? h_value : l_value;
-	parent_circuit->needs_update();
 }
 
 double PWM::next_change_time() {
