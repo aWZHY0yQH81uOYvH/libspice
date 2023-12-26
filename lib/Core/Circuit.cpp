@@ -405,7 +405,7 @@ int Circuit::system_function(double t, const double y[], double dydt[], void *pa
 	return GSL_SUCCESS;
 }
 
-void Circuit::sim_to_time(double stop) {
+void Circuit::sim_to_time(double stop, bool single_step) {
 	if(simulation_mode == DC_ANALYSIS) {
 		compute_dc_solution();
 		
@@ -414,6 +414,8 @@ void Circuit::sim_to_time(double stop) {
 		
 		simulation_mode = TRANSIENT_ANALYSIS;
 		gen_matrix_pend = true;
+		
+		if(single_step) return;
 	}
 	
 	if(gen_matrix_pend) {
@@ -423,7 +425,11 @@ void Circuit::sim_to_time(double stop) {
 	
 	double step = _dt ? *_dt : max_ts;
 	
-	while(t + EPSILON < stop) {
+	bool ran_step = false;
+	
+	while(t + EPSILON < stop && !(single_step && ran_step)) {
+		ran_step = true;
+		
 		const double save_time = next_save_time();
 		const double forced_end_time = std::min(save_time, next_modulator_time());
 		step = next_step_duration();
@@ -503,6 +509,10 @@ void Circuit::sim_to_time(double stop) {
 	
 	// Update dt with new value for next time
 	if(_dt) *_dt = step;
+}
+
+void Circuit::sim_single_step() {
+	sim_to_time(std::numeric_limits<double>::max(), true);
 }
 
 }

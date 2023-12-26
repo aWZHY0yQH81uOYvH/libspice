@@ -193,7 +193,8 @@ public:
 	const double *dt() const;
 	
 	// Simulate
-	void sim_to_time(double stop);
+	void sim_to_time(double stop, bool single_step = false);
+	void sim_single_step();
 	
 	// DC solution for generating steady-state
 	void compute_dc_solution();
