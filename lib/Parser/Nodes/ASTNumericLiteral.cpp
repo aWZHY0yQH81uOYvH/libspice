@@ -1,4 +1,4 @@
-#include "Parser/Nodes/NumericLiteral.hpp"
+#include "Parser/Nodes/ASTNumericLiteral.hpp"
 
 #include <unordered_map>
 #include <cstring>
@@ -10,11 +10,11 @@ namespace parser {
 
 // Any numeric digits, optional decimal, and optional leading digits, followed by an optional SI prefix or exponent format value
 // Also consumes any following letters like (if you write 1Kohm)
-const char * const NumericLiteral::regex_str    = "^((\\+|-)?[0-9]*\\.?[0-9]+(e-?[0-9]+)?)(t|terra|g|giga|meg|k|kilo|m|milli|u|micro|n|nano|p|pico|f|femto)?[a-z]*";
-const int          NumericLiteral::regex_flags  = REG_ICASE;
-const size_t       NumericLiteral::regex_groups = 4;
+const char * const ASTNumericLiteral::regex_str    = "^((\\+|-)?[0-9]*\\.?[0-9]+(e-?[0-9]+)?)(t|terra|g|giga|meg|k|kilo|m|milli|u|micro|n|nano|p|pico|f|femto)?[a-z]*";
+const int          ASTNumericLiteral::regex_flags  = REG_ICASE;
+const size_t       ASTNumericLiteral::regex_groups = 4;
 
-NumericLiteral::NumericLiteral(ASTNode *parent, NodePos pos, std::vector<std::string> &tokens): ASTNode(parent, pos) {
+ASTNumericLiteral::ASTNumericLiteral(ASTNode *parent, NodePos pos, std::vector<std::string> &tokens): ASTNode(parent, pos) {
 	number = std::stod(tokens.at(0));
 	
 	static const std::unordered_map<std::string, double> prefix_lut{
@@ -46,13 +46,13 @@ NumericLiteral::NumericLiteral(ASTNode *parent, NodePos pos, std::vector<std::st
 	}
 }
 
-std::string NumericLiteral::to_cpp() const {
+std::string ASTNumericLiteral::to_cpp() const {
 	char buf[32];
 	snprintf(buf, 32, "%e", number);
 	return buf;
 }
 
-double NumericLiteral::get_number() const {
+double ASTNumericLiteral::get_number() const {
 	return number;
 }
 

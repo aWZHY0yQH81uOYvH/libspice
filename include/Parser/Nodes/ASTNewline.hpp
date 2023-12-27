@@ -9,10 +9,10 @@
 namespace spice {
 namespace parser {
 
-class Newline: public ASTNode {
+class ASTNewline: public ASTNode {
 public:
 	using ASTNode::ASTNode;
-	Newline() {}
+	ASTNewline() {}
 	
 	virtual std::string to_cpp() const {
 		return "\n";

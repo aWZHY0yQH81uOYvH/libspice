@@ -1,7 +1,7 @@
 #include "Parser/ASTNode.hpp"
 
-#include "Parser/Nodes/Comment.hpp"
-#include "Parser/Nodes/NumericLiteral.hpp"
+#include "Parser/Nodes/ASTComment.hpp"
+#include "Parser/Nodes/ASTNumericLiteral.hpp"
 
 #include <cassert>
 #include <unordered_map>
@@ -139,10 +139,10 @@ ASTNode *ASTNode::check_match_core(NodePos &current_pos, const char *&syntax,
 }
 
 // Consume syntax, generate child nodes, and move up/down the syntax tree
-void ASTNode::consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line) {
+ASTNode *ASTNode::consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line) {
 	assert(current_node == this);
 	
-	check_match<Comment>(current_pos, syntax);
+	check_match<ASTComment>(current_pos, syntax);
 }
 
 }

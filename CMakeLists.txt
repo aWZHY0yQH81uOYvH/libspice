@@ -3,7 +3,7 @@ project(libspice CXX)
 
 include(GNUInstallDirs)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 # External libraries
 
@@ -43,8 +43,9 @@ set(LIB_SOURCES
 	
 	lib/Parser/Parser.cpp
 	lib/Parser/ASTNode.cpp
-	lib/Parser/Nodes/Comment.cpp
-	lib/Parser/Nodes/NumericLiteral.cpp
+	lib/Parser/Nodes/ASTComment.cpp
+	lib/Parser/Nodes/ASTNumericLiteral.cpp
+	lib/Parser/Nodes/ASTInclude.cpp
 )
 
 set(LIB_HEADERS
@@ -68,9 +69,10 @@ set(LIB_HEADERS
 	
 	include/Parser/Parser.hpp
 	include/Parser/ASTNode.hpp
-	include/Parser/Nodes/Comment.hpp
-	include/Parser/Nodes/NumericLiteral.hpp
-	include/Parser/Nodes/Newline.hpp
+	include/Parser/Nodes/ASTNewline.hpp
+	include/Parser/Nodes/ASTComment.hpp
+	include/Parser/Nodes/ASTNumericLiteral.hpp
+	include/Parser/Nodes/ASTInclude.hpp
 	
 	include/SPICE.hpp
 )

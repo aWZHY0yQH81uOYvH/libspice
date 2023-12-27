@@ -71,7 +71,7 @@ public:
 	void all_include_files(std::unordered_set<std::string> &includes) const;
 	
 	// Consume syntax, generate child nodes, and move up/down the syntax tree
-	void consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line);
+	ASTNode *consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line);
 	
 	// Construct, append, and return a new child node of the given type if its regex matches the syntax input
 	// Also moves the syntax pointer forwards

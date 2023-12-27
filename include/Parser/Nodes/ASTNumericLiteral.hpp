@@ -1,5 +1,5 @@
 /*
-	AST node for a comment so comments can be passed through to C++ code
+	AST node for a numeric literal
 */
 
 #pragma once
@@ -9,18 +9,20 @@
 namespace spice {
 namespace parser {
 
-class Comment: public ASTNode {
+class ASTNumericLiteral: public ASTNode {
 protected:
-	std::string text;
+	double number;
 	
 public:
-	Comment(ASTNode *parent, NodePos pos, std::vector<std::string> &tokens);
+	ASTNumericLiteral(ASTNode *parent, NodePos pos, std::vector<std::string> &tokens);
 	
 	static const char * const regex_str;
 	static const int regex_flags;
 	static const size_t regex_groups;
 	
 	virtual std::string to_cpp() const;
+	
+	double get_number() const;
 };
 
 }
