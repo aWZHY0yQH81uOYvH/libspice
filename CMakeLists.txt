@@ -40,6 +40,11 @@ set(LIB_SOURCES
 	
 	lib/Modulator/PWM.cpp
 	lib/Modulator/Sine.cpp
+	
+	lib/Parser/Parser.cpp
+	lib/Parser/ASTNode.cpp
+	lib/Parser/Nodes/Comment.cpp
+	lib/Parser/Nodes/NumericLiteral.cpp
 )
 
 set(LIB_HEADERS
@@ -50,6 +55,7 @@ set(LIB_HEADERS
 	include/Core/TwoTerminalComponent.hpp
 	include/Core/IntegratingComponent.hpp
 	include/Core/Modulator.hpp
+	include/Core/BuiltinFunctions.hpp
 	
 	include/Component/VSource.hpp
 	include/Component/ISource.hpp
@@ -59,6 +65,12 @@ set(LIB_HEADERS
 	
 	include/Modulator/PWM.hpp
 	include/Modulator/Sine.hpp
+	
+	include/Parser/Parser.hpp
+	include/Parser/ASTNode.hpp
+	include/Parser/Nodes/Comment.hpp
+	include/Parser/Nodes/NumericLiteral.hpp
+	include/Parser/Nodes/Newline.hpp
 	
 	include/SPICE.hpp
 )
