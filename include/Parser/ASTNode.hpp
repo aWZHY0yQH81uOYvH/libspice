@@ -64,8 +64,8 @@ public:
 	virtual std::string all_to_cpp() const;
 	virtual std::string all_to_hpp() const;
 	
-	// Verify this node and all children; throw exception if not valid
-	void all_verify() const;
+	// Verify this node and all children; create list of errors
+	void all_verify(std::vector<SyntaxException> &error_list) const;
 	
 	// Get all include files needed for the C++ representation
 	void all_include_files(std::unordered_set<std::string> &includes) const;

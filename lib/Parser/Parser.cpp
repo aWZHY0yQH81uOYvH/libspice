@@ -71,8 +71,12 @@ void Parser::load_file(const FileInfo &file) {
 	
 	std::ifstream fs(file.path);
 	
-	if(!fs.is_open())
-		throw std::runtime_error("Unable to open " + quoted_path(file.path));
+	if(!fs.is_open()) {
+		std::ostringstream ss;
+		ss << "Unable to open file " << file.path << std::endl;
+		print_include_hierarchy(file.included_by, ss);
+		throw std::runtime_error(ss.str());
+	}
 	
 	// Load lines into lines vector
 	std::string line;
@@ -80,20 +84,6 @@ void Parser::load_file(const FileInfo &file) {
 		lines.push_back(std::move(line));
 	
 	fs.close();
-}
-
-// Convert SyntaxException into a runtime_exception with more information
-void Parser::rethrow_syntax_error(const SyntaxException &se) const {
-	std::ostringstream ss;
-	
-	ss << "Error in file " << current_file->path << " at line " << (se.pos.line + 1) << ", column " << (se.pos.character + 1) << std::endl;
-	
-	print_include_hierarchy(current_file->included_by, ss);
-	print_node_pos(se.pos, ss);
-	
-	ss << se.error << std::endl;
-	
-	throw std::runtime_error(ss.str());
 }
 
 // Print paths leading to a file inclusion
@@ -116,6 +106,8 @@ void Parser::print_node_pos(const NodePos &np, std::ostringstream &ss) const {
 
 // Run parsing on all files
 void Parser::parse() {
+	std::ostringstream errors;
+	
 	for(size_t file_ind = 0; file_ind < files.size(); file_ind++) {
 		const FileInfo &fi = files[file_ind];
 		
@@ -153,22 +145,29 @@ void Parser::parse() {
 				
 				// Handle line continuation + characters
 				if(new_line && *line_ptr == '+') {
-					// Add new line
+					// Add newline
 					current_node->children.emplace_back(new ASTNewline);
 					line_ptr++;
 					new_line = false;
 					continue;
 				}
 				
-				ASTNode *inserted_node = current_node->consume(current_node, np, line_ptr, new_line);
+				// Attempt to consume while going up the node tree
+				ASTNode *inserted_node = nullptr;
+				while(current_node) {
+					inserted_node = current_node->consume(current_node, np, line_ptr, new_line);
+					
+					if(!inserted_node)
+						current_node = current_node->parent;
+				}
 				
 				// Make sure a new node was actually inserted
 				if(!inserted_node) {
-					std::ostringstream ss;
-					ss << "Unknown token in " << current_file->path << std::endl;
-					print_include_hierarchy(current_file->included_by, ss);
-					print_node_pos(np, ss);
-					throw std::runtime_error(ss.str());
+					errors << "Unknown token in " << current_file->path << std::endl;
+					print_include_hierarchy(current_file->included_by, errors);
+					print_node_pos(np, errors);
+					errors << std::endl;
+					break;
 				}
 				
 				// If we just added a .include directive, process that file too if we haven't already
@@ -181,20 +180,32 @@ void Parser::parse() {
 		}
 		
 		// Verify
-		try {
-			root_node->all_verify();
-		} catch(const SyntaxException &e) {
-			rethrow_syntax_error(e);
+		std::vector<SyntaxException> error_list;
+		root_node->all_verify(error_list);
+		
+		// Append to error list
+		for(auto &error:error_list) {
+			errors << "Error in file " << current_file->path << " at line " << (error.pos.line + 1) << ", column " << (error.pos.character + 1) << std::endl;
+			
+			print_include_hierarchy(current_file->included_by, errors);
+			print_node_pos(error.pos, errors);
+			
+			errors << error.error << std::endl << std::endl;
 		}
+		
+		if(error_list.size()) continue;
 		
 		// Make sure we got back to the root node
 		if(current_node != root_node) {
-			std::ostringstream ss;
-			ss << "Unknown error in " << current_file->path << std::endl;
-			print_include_hierarchy(current_file->included_by, ss);
-			throw std::runtime_error(ss.str());
+			errors << "Unknown error in " << current_file->path << std::endl;
+			print_include_hierarchy(current_file->included_by, errors);
+			errors << std::endl;
 		}
 	}
+	
+	// Throw exception if any errors were generated
+	if(errors.str().length())
+		throw std::runtime_error(errors.str());
 }
 
 // Generate all C++ files

@@ -48,10 +48,15 @@ std::string ASTNode::all_to_hpp() const {
 void ASTNode::verify() const {}
 
 // Verify this node and all children
-void ASTNode::all_verify() const {
-	verify();
+void ASTNode::all_verify(std::vector<SyntaxException> &error_list) const {
+	try {
+		verify();
+	} catch(const SyntaxException &se) {
+		error_list.push_back(se);
+	}
+	
 	for(auto &child:children)
-		child->all_verify();
+		child->all_verify(error_list);
 }
 
 // Throw a verify error

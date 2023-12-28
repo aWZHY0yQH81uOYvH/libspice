@@ -52,9 +52,6 @@ protected:
 	// Find and load a file into the lines memory area
 	void load_file(const FileInfo &file);
 	
-	// Convert SyntaxException into a runtime_exception with more information
-	void rethrow_syntax_error(const SyntaxException &se) const;
-	
 	// Print paths leading to a file inclusion
 	void print_include_hierarchy(const FileInfo *start, std::ostringstream &ss) const;
 	
