@@ -26,19 +26,15 @@ void Parser::add_file(std::filesystem::path path, const FileInfo *included_by) {
 		for(auto &search:include_paths) {
 			auto p = search / path;
 			
-			// Resolve symlinks
-			for(int link_count = 0; link_count < 100 && std::filesystem::is_symlink(p); link_count++)
-				p = std::filesystem::read_symlink(p);
-			
-			if(std::filesystem::is_symlink(p))
-				throw std::runtime_error("Too many symlinks for file " + quoted_path(path));
-			
 			// Check for existance
-			if(std::filesystem::exists(p) && std::filesystem::is_regular_file(p)) {
-				found = true;
-				path = p;
-				break;
-			}
+			if(!(std::filesystem::exists(p) && std::filesystem::is_regular_file(p)))
+				continue;
+			
+			found = true;
+			
+			// Make canonical (resolve symlinks, make absolute)
+			path = std::filesystem::canonical(p);
+			break;
 		}
 		
 		if(!found) {
