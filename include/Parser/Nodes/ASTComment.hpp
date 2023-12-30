@@ -12,6 +12,7 @@ namespace parser {
 class ASTComment: public ASTNode {
 protected:
 	std::string text;
+	bool start_of_line;
 	
 public:
 	ASTComment(NodePos pos, std::vector<std::string> &tokens);
