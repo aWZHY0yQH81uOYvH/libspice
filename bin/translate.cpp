@@ -18,10 +18,9 @@ int main(int argc, const char **argv) {
 	Parser parser;
 	
 	// Always look in current directory
-	parser.include_paths.push_back(".");
+	parser.add_include_path(".");
 	
-	// Cache file list so files can be searched for after the inlcude paths have been processed
-	std::vector<std::filesystem::path> file_list;
+	std::vector<std::filesystem::path> file_list, include_paths;
 	
 	std::filesystem::path output_prefix;
 	bool gen_cmake = false;
@@ -52,9 +51,9 @@ int main(int argc, const char **argv) {
 		
 		else if(strstr(arg, "-I") == arg) {
 			if(strlen(arg) > 2)
-				parser.include_paths.emplace_back(arg + 2);
+				include_paths.emplace_back(arg + 2);
 			else if(++argn < argc)
-				parser.include_paths.emplace_back(argv[argn]);
+				include_paths.emplace_back(argv[argn]);
 			else {
 				std::cerr << "Missing include path" << std::endl << std::endl;
 				help = true;
@@ -74,12 +73,22 @@ int main(int argc, const char **argv) {
 	if(help) {
 		std::cerr << "===== libspice translator =====" << std::endl
 		          << "Translate standard SPICE files into C++ for use with libspice" << std::endl
-		          << "Usage: " << argv[0] << " [-h] [-I include path] [-o output prefix] input files" << std::endl
+		          << "Usage: " << argv[0] << " [-h] [-I include path] [-o output prefix] [--cmake] input files" << std::endl
 		          << "\t-h        : print help" << std::endl
 		          << "\t-I [path] : specify paths used to search for .included files" << std::endl
 		          << "\t-o [path] : specify an output prefix to place .cpp and .hpp files" << std::endl
+		          << "\t--cmake   : generate CMake files to compile generated C++" << std::endl
 		          << std::endl;
 		return 1;
+	}
+	
+	// Add include paths and warn if they don't exist
+	for(auto &path:include_paths) {
+		try {
+			parser.add_include_path(path);
+		} catch(const std::filesystem::filesystem_error &fse) {
+			std::cerr << "Warning: include path " << path << " does not exist; ignoring" << std::endl;
+		}
 	}
 	
 	// Canonicalize paths to avoid looking in include paths for files listed explicitly

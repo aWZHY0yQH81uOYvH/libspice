@@ -30,6 +30,9 @@ protected:
 	// List of files to process
 	std::vector<const FileInfo> files;
 	
+	// List of include paths to look for files in
+	std::vector<std::filesystem::path> include_paths;
+	
 	// List of file lines
 	std::vector<std::string> lines;
 	
@@ -49,12 +52,12 @@ public:
 	// Root AST nodes for each file
 	std::vector<std::unique_ptr<ASTNode>> ast_roots;
 	
-	// List of include paths to look for files in
-	std::vector<std::filesystem::path> include_paths;
-	
 	// Add a file if it isn't already in the file list
 	// Must be present in include_paths
-	void add_file(std::filesystem::path path, const FileInfo *included_by = nullptr);
+	void add_file(std::filesystem::path path, const FileInfo *included_by = nullptr, const NodePos *include_pos = nullptr);
+	
+	// Add an include path; throws an expcetion if it doesn't exist
+	void add_include_path(std::filesystem::path path);
 	
 	// Run parsing on all files
 	void parse();

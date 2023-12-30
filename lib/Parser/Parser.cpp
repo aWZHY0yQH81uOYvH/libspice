@@ -15,11 +15,22 @@ namespace parser {
 
 // Add a file if it isn't already in the file list
 // Must be present in include_paths
-void Parser::add_file(std::filesystem::path path, const FileInfo *included_by) {
+void Parser::add_file(std::filesystem::path path, const FileInfo *included_by, const NodePos *include_pos) {
 	
 	// Look in search path if given a relative path
 	if(path.is_relative()) {
 		bool found = false;
+		
+		// Check in same directory as file it was included by
+		// Temporarily add parent path of included file to include_paths
+		bool pop_added_path = false;
+		if(included_by) {
+			auto canonical_path = std::filesystem::canonical(included_by->path.parent_path());
+			if(std::find(include_paths.begin(), include_paths.end(), canonical_path) == include_paths.end()) {
+				include_paths.push_back(canonical_path);
+				pop_added_path = true;
+			}
+		}
 		
 		for(auto &search:include_paths) {
 			auto p = search / path;
@@ -39,6 +50,8 @@ void Parser::add_file(std::filesystem::path path, const FileInfo *included_by) {
 			std::ostringstream ss;
 			
 			ss << "Failed to find file " << path << std::endl;
+			if(include_pos)
+				print_node_pos(*include_pos, ss);
 			print_include_hierarchy(included_by, ss);
 			ss << std::endl;
 			
@@ -48,6 +61,10 @@ void Parser::add_file(std::filesystem::path path, const FileInfo *included_by) {
 			
 			throw std::runtime_error(ss.str());
 		}
+		
+		// Remove temporary path if one was added
+		if(pop_added_path)
+			include_paths.pop_back();
 	}
 	
 	// Check for uniqueness
@@ -57,6 +74,14 @@ void Parser::add_file(std::filesystem::path path, const FileInfo *included_by) {
 	
 	// Add
 	files.emplace_back(path, included_by);
+}
+
+// Add an include path; if it does not exist, do nothing
+void Parser::add_include_path(std::filesystem::path path) {
+	path = std::filesystem::canonical(path);
+	
+	if(std::find(include_paths.begin(), include_paths.end(), path) == include_paths.end())
+		include_paths.push_back(path);
 }
 
 // Find and load a file into the lines memory area
@@ -174,7 +199,7 @@ void Parser::parse() {
 				// If we just added a .include directive, process that file too if we haven't already
 				ASTDotInclude *asti = dynamic_cast<ASTDotInclude*>(inserted_node);
 				if(asti)
-					add_file(asti->get_file(), current_file);
+					add_file(asti->get_file(), current_file, &np);
 				
 				new_line = false;
 			}
