@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <memory>
 #include <unordered_set>
 #include <typeinfo>
@@ -41,7 +42,7 @@ class ASTNode {
 public:
 	ASTNode *parent = nullptr;
 	NodePos pos;
-	std::vector<std::shared_ptr<ASTNode>> children;
+	std::list<std::shared_ptr<ASTNode>> children;
 	
 	// Basic constructor
 	ASTNode(NodePos pos = {0, 0});
@@ -111,8 +112,8 @@ public:
 	std::shared_ptr<ASTNode> &get_shared_ptr(ASTNode *to);
 	
 	// Add a child and update its parent
-	void add_child(ASTNode *child);
-	void add_child(std::shared_ptr<ASTNode> child);
+	std::shared_ptr<ASTNode> &add_child(ASTNode *child);
+	std::shared_ptr<ASTNode> &add_child(std::shared_ptr<ASTNode> child);
 	
 private:
 	// Core of check_match; removing redundancy that is not type-dependent

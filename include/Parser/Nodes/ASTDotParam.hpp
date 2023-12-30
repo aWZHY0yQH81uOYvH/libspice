@@ -1,5 +1,6 @@
 /*
 	AST node for a .param directive
+	https://ltwiki.org/files/LTspiceHelp.chm/html/DotParam.htm
 */
 
 #pragma once
@@ -11,12 +12,8 @@ namespace parser {
 
 class ASTDotParam: public ASTNode {
 private:
-	enum MatchState {
-		WAIT_FOR_IDENTIFIER,
-		WAIT_FOR_EQUALS
-	};
-	
-	MatchState match_state = WAIT_FOR_IDENTIFIER;
+	std::vector<std::shared_ptr<ASTNode>*> identifiers;
+	std::vector<std::shared_ptr<ASTNode>*> expressions;
 	
 public:
 	using ASTNode::ASTNode;

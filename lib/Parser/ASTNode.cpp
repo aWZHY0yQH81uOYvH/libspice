@@ -159,14 +159,16 @@ std::shared_ptr<ASTNode> &ASTNode::get_shared_ptr(ASTNode *to) {
 }
 
 // Add a child and update its parent
-void ASTNode::add_child(ASTNode *child) {
+std::shared_ptr<ASTNode> &ASTNode::add_child(ASTNode *child) {
 	child->parent = this;
 	children.emplace_back(child);
+	return *children.rbegin();
 }
 
-void ASTNode::add_child(std::shared_ptr<ASTNode> child) {
+std::shared_ptr<ASTNode> &ASTNode::add_child(std::shared_ptr<ASTNode> child) {
 	child->parent = this;
 	children.push_back(child);
+	return *children.rbegin();
 }
 
 // Consume syntax, generate child nodes, and move up/down the syntax tree
