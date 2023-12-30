@@ -31,6 +31,8 @@ public:
 	virtual std::string all_to_hpp() const override;
 	
 	virtual ASTNode *consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line) override;
+	
+	virtual bool exit_on_newline() const override;
 };
 
 }

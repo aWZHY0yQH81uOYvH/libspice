@@ -39,9 +39,7 @@ std::string ASTDotParam::all_to_hpp() const {
 }
 
 ASTNode *ASTDotParam::consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line) {
-	// Done at the end of the line
-	if(new_line)
-		AST_CONSUME_GO_UP();
+	(void)new_line;
 	
 	switch(match_state) {
 		case WAIT_FOR_IDENTIFIER: {
@@ -74,6 +72,10 @@ ASTNode *ASTDotParam::consume(ASTNode *&current_node, NodePos &current_pos, cons
 	}
 	
 	return nullptr;
+}
+
+bool ASTDotParam::exit_on_newline() const {
+	return true;
 }
 
 }

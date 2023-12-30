@@ -93,6 +93,9 @@ public:
 	// Consume syntax, generate child nodes, and move up/down the syntax tree
 	virtual ASTNode *consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line);
 	
+	// Return true to force this node to exit on a newline
+	virtual bool exit_on_newline() const;
+	
 	// Construct and return a new child node of the given type if its regex matches the syntax input
 	// Also moves the syntax pointer forwards
 	template<typename T> T *check_match(NodePos &current_pos, const char *&syntax) {

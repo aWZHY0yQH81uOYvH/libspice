@@ -145,6 +145,11 @@ ASTNode *ASTNode::check_match_core(NodePos &current_pos, const char *&syntax,
 	return node;
 }
 
+// Return true to force this node to exit on a newline
+bool ASTNode::exit_on_newline() const {
+	return false;
+}
+
 // Get a reference to the shared_ptr child object pointing to the given pointer
 std::shared_ptr<ASTNode> &ASTNode::get_shared_ptr(ASTNode *to) {
 	auto it = children.begin();

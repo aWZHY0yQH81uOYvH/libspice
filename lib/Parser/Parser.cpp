@@ -178,6 +178,21 @@ void Parser::parse() {
 					continue;
 				}
 				
+				// Check if we are on a new line and one of the parent nodes requires exiting
+				if(new_line) {
+					ASTNode *node_ptr = current_node;
+					ASTNode *highest_exit_node = nullptr;
+					
+					while(node_ptr) {
+						if(node_ptr->exit_on_newline())
+							highest_exit_node = node_ptr;
+						node_ptr = node_ptr->parent;
+					}
+					
+					if(highest_exit_node)
+						current_node = highest_exit_node->parent;
+				}
+				
 				// Attempt to consume while going up the node tree
 				ASTNode *inserted_node = nullptr;
 				while(current_node && !inserted_node) {
