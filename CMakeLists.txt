@@ -44,8 +44,16 @@ set(LIB_SOURCES
 	lib/Parser/Parser.cpp
 	lib/Parser/ASTNode.cpp
 	lib/Parser/Nodes/ASTComment.cpp
+	lib/Parser/Nodes/ASTEquals.cpp
 	lib/Parser/Nodes/ASTNumericLiteral.cpp
-	lib/Parser/Nodes/ASTInclude.cpp
+	lib/Parser/Nodes/ASTIdentifier.cpp
+	lib/Parser/Nodes/ASTExpression.cpp
+	lib/Parser/Nodes/ASTExprParentheses.cpp
+	lib/Parser/Nodes/ASTExprCurlyBraces.cpp
+	lib/Parser/Nodes/ASTExprOperator.cpp
+	lib/Parser/Nodes/ASTFunction.cpp
+	lib/Parser/Nodes/ASTDotInclude.cpp
+	lib/Parser/Nodes/ASTDotParam.cpp
 )
 
 set(LIB_HEADERS
@@ -71,8 +79,16 @@ set(LIB_HEADERS
 	include/Parser/ASTNode.hpp
 	include/Parser/Nodes/ASTNewline.hpp
 	include/Parser/Nodes/ASTComment.hpp
+	include/Parser/Nodes/ASTEquals.hpp
 	include/Parser/Nodes/ASTNumericLiteral.hpp
-	include/Parser/Nodes/ASTInclude.hpp
+	include/Parser/Nodes/ASTIdentifier.hpp
+	include/Parser/Nodes/ASTExpression.hpp
+	include/Parser/Nodes/ASTExprParentheses.hpp
+	include/Parser/Nodes/ASTExprCurlyBraces.hpp
+	include/Parser/Nodes/ASTExprOperator.hpp
+	include/Parser/Nodes/ASTFunction.hpp
+	include/Parser/Nodes/ASTDotInclude.hpp
+	include/Parser/Nodes/ASTDotParam.hpp
 	
 	include/SPICE.hpp
 )
@@ -104,6 +120,15 @@ add_executable(test EXCLUDE_FROM_ALL
 
 target_link_libraries(test spice)
 
+# Translator program
+
+add_executable(translate
+	bin/translate.cpp
+)
+
+target_link_libraries(translate spice)
+set_target_properties(translate PROPERTIES OUTPUT_NAME libspice-translate)
+
 # Generate CMake config file
 
 set(libspice_INCLUDE_DIRS
@@ -128,6 +153,7 @@ configure_file(libspiceConfig.cmake.in libspiceConfig.cmake @ONLY)
 
 install(TARGETS
 	spice
+	translate
 	
 	FILE_SET headers
 		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libspice

@@ -1,5 +1,7 @@
 /*
  	AST node for a .include directive
+	https://ltwiki.org/files/LTspiceHelp.chm/html/DotInclude.htm
+	(doesn't support fetching over HTTP)
 */
 
 #pragma once
@@ -11,18 +13,18 @@
 namespace spice {
 namespace parser {
 
-class ASTInclude: public ASTNode {
+class ASTDotInclude: public ASTNode {
 protected:
 	std::string file;
 	
 public:
-	ASTInclude(ASTNode *parent, NodePos pos, std::vector<std::string> &tokens);
+	ASTDotInclude(NodePos pos, std::vector<std::string> &tokens);
 	
 	static const char * const regex_str;
 	static const int regex_flags;
 	static const size_t regex_groups;
 	
-	virtual std::string to_hpp() const;
+	virtual std::string to_hpp() const override;
 	
 	const std::string &get_file() const;
 };

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "Parser/ASTNode.hpp"
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -13,21 +15,6 @@
 
 namespace spice {
 namespace parser {
-
-// Information about where in a file a syntax node was from
-struct NodePos {
-	size_t line;
-	size_t character;
-};
-
-// Exception thrown when syntax is wrong
-class SyntaxException: public std::exception {
-public:
-	SyntaxException(NodePos pos, std::string error): pos(pos), error(error) {}
-	
-	NodePos pos;
-	std::string error;
-};
 
 // Information about a file
 struct FileInfo {
@@ -73,8 +60,9 @@ public:
 	void parse();
 	
 	// Generate output files
-	void gen_cpp(const std::string &prefix) const;
-	void gen_cmake(const std::string &prefix) const;
+	// Return files generated
+	std::vector<std::filesystem::path> gen_cpp(const std::filesystem::path &prefix) const;
+	std::filesystem::path gen_cmake(const std::filesystem::path &prefix) const;
 	
 	// Utility functions
 	static void tolower(std::string &str);

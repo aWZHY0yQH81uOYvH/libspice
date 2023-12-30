@@ -1,5 +1,5 @@
 /*
-	AST node for a comment so comments can be passed through to C++ code
+	AST node for an equals sign
 */
 
 #pragma once
@@ -9,12 +9,9 @@
 namespace spice {
 namespace parser {
 
-class ASTComment: public ASTNode {
-protected:
-	std::string text;
-	
+class ASTEquals: public ASTNode {
 public:
-	ASTComment(NodePos pos, std::vector<std::string> &tokens);
+	using ASTNode::ASTNode;
 	
 	static const char * const regex_str;
 	static const int regex_flags;

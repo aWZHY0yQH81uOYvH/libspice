@@ -1,4 +1,5 @@
 #include "Parser/Nodes/ASTNumericLiteral.hpp"
+#include "Parser/Parser.hpp"
 
 #include <unordered_map>
 #include <cstring>
@@ -9,12 +10,12 @@ namespace spice {
 namespace parser {
 
 // Any numeric digits, optional decimal, and optional leading digits, followed by an optional SI prefix or exponent format value
-// Also consumes any following letters like (if you write 1Kohm)
+// Also consumes any following letters (like if you write 1Kohm)
 const char * const ASTNumericLiteral::regex_str    = "^((\\+|-)?[0-9]*\\.?[0-9]+(e-?[0-9]+)?)(t|terra|g|giga|meg|k|kilo|m|milli|u|micro|n|nano|p|pico|f|femto)?[a-z]*";
 const int          ASTNumericLiteral::regex_flags  = REG_ICASE;
 const size_t       ASTNumericLiteral::regex_groups = 4;
 
-ASTNumericLiteral::ASTNumericLiteral(ASTNode *parent, NodePos pos, std::vector<std::string> &tokens): ASTNode(parent, pos) {
+ASTNumericLiteral::ASTNumericLiteral(NodePos pos, std::vector<std::string> &tokens): ASTExpression(pos) {
 	number = std::stod(tokens.at(0));
 	
 	static const std::unordered_map<std::string, double> prefix_lut{
@@ -45,6 +46,9 @@ ASTNumericLiteral::ASTNumericLiteral(ASTNode *parent, NodePos pos, std::vector<s
 		number *= result->second;
 	}
 }
+
+// Always valid once constructed
+void ASTNumericLiteral::verify() const {}
 
 std::string ASTNumericLiteral::to_cpp() const {
 	char buf[32];

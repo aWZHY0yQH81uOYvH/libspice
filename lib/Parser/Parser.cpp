@@ -1,16 +1,14 @@
 #include "Parser/Parser.hpp"
-#include "Parser/ASTNode.hpp"
 
 #include "Parser/Nodes/ASTNewline.hpp"
 #include "Parser/Nodes/ASTComment.hpp"
-#include "Parser/Nodes/ASTInclude.hpp"
+#include "Parser/Nodes/ASTDotInclude.hpp"
 
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
 #include <utility>
 #include <cctype>
-#include <cassert>
 
 namespace spice {
 namespace parser {
@@ -104,6 +102,8 @@ void Parser::print_node_pos(const NodePos &np, std::ostringstream &ss) const {
 void Parser::parse() {
 	std::ostringstream errors;
 	
+	ast_roots.resize(files.size());
+	
 	for(size_t file_ind = 0; file_ind < files.size(); file_ind++) {
 		const FileInfo &fi = files[file_ind];
 		
@@ -126,6 +126,8 @@ void Parser::parse() {
 			bool new_line = true;
 			
 			while(line_ptr < line_end) {
+				np.character = line_ptr - line_start;
+				
 				// Try to consume as much whitespace as possible
 				if(std::isspace(*line_ptr)) {
 					line_ptr++;
@@ -133,16 +135,19 @@ void Parser::parse() {
 				}
 				
 				// Try to consume as many comments as possible
-				if(current_node->check_match<ASTComment>(np, line_ptr)) {
-					// Add newline
-					current_node->children.emplace_back(new ASTNewline);
-					continue;
+				if(*line_ptr == ';' || (*line_ptr == '*' && new_line)) {
+					auto *comment = current_node->check_match<ASTComment>(np, line_ptr);
+					if(comment) {
+						current_node->add_child(comment);
+						current_node->add_child(new ASTNewline); // Include newline
+						continue;
+					}
 				}
 				
 				// Handle line continuation + characters
 				if(new_line && *line_ptr == '+') {
 					// Add newline
-					current_node->children.emplace_back(new ASTNewline);
+					current_node->add_child(new ASTNewline);
 					line_ptr++;
 					new_line = false;
 					continue;
@@ -150,7 +155,7 @@ void Parser::parse() {
 				
 				// Attempt to consume while going up the node tree
 				ASTNode *inserted_node = nullptr;
-				while(current_node) {
+				while(current_node && !inserted_node) {
 					inserted_node = current_node->consume(current_node, np, line_ptr, new_line);
 					
 					if(!inserted_node)
@@ -159,7 +164,7 @@ void Parser::parse() {
 				
 				// Make sure a new node was actually inserted
 				if(!inserted_node) {
-					errors << "Unknown token in " << current_file->path << std::endl;
+					errors << "Invalid syntax in file " << current_file->path << std::endl;
 					print_include_hierarchy(current_file->included_by, errors);
 					print_node_pos(np, errors);
 					errors << std::endl;
@@ -167,7 +172,7 @@ void Parser::parse() {
 				}
 				
 				// If we just added a .include directive, process that file too if we haven't already
-				ASTInclude *asti = dynamic_cast<ASTInclude*>(inserted_node);
+				ASTDotInclude *asti = dynamic_cast<ASTDotInclude*>(inserted_node);
 				if(asti)
 					add_file(asti->get_file(), current_file);
 				
@@ -188,15 +193,6 @@ void Parser::parse() {
 			
 			errors << error.error << std::endl << std::endl;
 		}
-		
-		if(error_list.size()) continue;
-		
-		// Make sure we got back to the root node
-		if(current_node != root_node) {
-			errors << "Unknown error in " << current_file->path << std::endl;
-			print_include_hierarchy(current_file->included_by, errors);
-			errors << std::endl;
-		}
 	}
 	
 	// Throw exception if any errors were generated
@@ -205,12 +201,33 @@ void Parser::parse() {
 }
 
 // Generate all C++ files
-void Parser::gen_cpp(const std::string &prefix) const {
+std::vector<std::filesystem::path> Parser::gen_cpp(const std::filesystem::path &prefix) const {
 	// TODO
+	// Pass through the prefix to .include statement things?
+	
+	std::vector<std::filesystem::path> generated_files;
+	
+	for(size_t file_ind = 0; file_ind < files.size(); file_ind++) {
+		const FileInfo &file = files[file_ind];
+		const ASTNode *node = ast_roots[file_ind].get();
+		
+		std::filesystem::path file_path = prefix / file.path.filename().replace_extension("cpp");
+		std::ofstream out(file_path);
+		if(!out.good())
+			throw std::runtime_error("Can't open file for writing: " + quoted_path(file_path));
+		
+		out << node->all_to_cpp();
+		
+		out.close();
+		
+		generated_files.push_back(file_path);
+	}
+	
+	return generated_files;
 }
 
 // Generate CMake file
-void Parser::gen_cmake(const std::string &prefix) const {
+std::filesystem::path Parser::gen_cmake(const std::filesystem::path &prefix) const {
 	// TODO
 	// Make a template thing in ../share?
 }

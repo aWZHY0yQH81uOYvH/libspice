@@ -1,5 +1,5 @@
 /*
-	AST node for a numeric literal
+	AST node for a variable identifier
 */
 
 #pragma once
@@ -9,23 +9,22 @@
 namespace spice {
 namespace parser {
 
-class ASTNumericLiteral: public ASTExpression {
+class ASTIdentifier: public ASTExpression {
 protected:
-	double number;
+	std::string name;
 	
 public:
-	ASTNumericLiteral(NodePos pos, std::vector<std::string> &tokens);
+	ASTIdentifier(NodePos pos, std::vector<std::string> &tokens);
 	
 	static const char * const regex_str;
 	static const int regex_flags;
 	static const size_t regex_groups;
 	
-	void verify() const override;
-	
 	virtual std::string to_cpp() const override;
 	
-	double get_number() const;
+	const std::string &get_name() const;
 };
 
 }
 }
+

@@ -206,14 +206,33 @@ struct builtin {
 	}
 	
 	// 1 if x > .5, else 0
-	static inline double buf(double x) {
-		return x > 0.5 ? 1 : 0;
+	static inline bool buf(double x) {
+		return x > 0.5;
+	}
+	
+	static inline bool buf(bool x) {
+		return x;
 	}
 	
 	// 0 if x > .5, else 1
-	static inline double inv(double x) {
-		return x > 0.5 ? 0 : 1;
+	static inline template<typename Tx> bool inv(Tx x) {
+		return !buf(x);
 	}
+	
+	// Adapt boolean behavior to possibly use floating-point arguments (non-standard SPICE functions; used by SPICE translator)
+	static inline template<typename Tx, typename Ty> bool _and(Tx x, Ty y) {
+		return buf(x) && buf(y);
+	}
+	
+	static inline template<typename Tx, typename Ty> bool _or(Tx x, Ty y) {
+		return buf(x) || buf(y);
+	}
+	
+	static inline template<typename Tx, typename Ty> bool _xor(Tx x, Ty y) {
+		return buf(x) ^ buf(y);
+	}
+	
+	static inline double 
 	
 };
 }
