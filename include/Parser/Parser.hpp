@@ -28,7 +28,7 @@ class ASTNode;
 class Parser {
 protected:
 	// List of files to process
-	std::vector<const FileInfo> files;
+	std::vector<std::unique_ptr<FileInfo>> files;
 	
 	// List of include paths to look for files in
 	std::vector<std::filesystem::path> include_paths;
@@ -40,7 +40,7 @@ protected:
 	const FileInfo *current_file = nullptr;
 	
 	// Find and load a file into the lines memory area
-	void load_file(const FileInfo &file);
+	void load_file(const FileInfo *file);
 	
 	// Print paths leading to a file inclusion
 	void print_include_hierarchy(const FileInfo *start, std::ostringstream &ss) const;

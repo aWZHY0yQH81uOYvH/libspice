@@ -69,11 +69,11 @@ void Parser::add_file(std::filesystem::path path, const FileInfo *included_by, c
 	
 	// Check for uniqueness
 	for(auto &fi:files)
-		if(fi.path == path)
+		if(fi->path == path)
 			return;
 	
 	// Add
-	files.emplace_back(path, included_by);
+	files.emplace_back(new FileInfo{path, included_by});
 }
 
 // Add an include path; if it does not exist, do nothing
@@ -85,15 +85,15 @@ void Parser::add_include_path(std::filesystem::path path) {
 }
 
 // Find and load a file into the lines memory area
-void Parser::load_file(const FileInfo &file) {
-	current_file = &file;
+void Parser::load_file(const FileInfo *file) {
+	current_file = file;
 	
-	std::ifstream fs(file.path);
+	std::ifstream fs(file->path);
 	
 	if(!fs.is_open()) {
 		std::ostringstream ss;
-		ss << "Unable to open file " << file.path << std::endl;
-		print_include_hierarchy(file.included_by, ss);
+		ss << "Unable to open file " << file->path << std::endl;
+		print_include_hierarchy(file->included_by, ss);
 		throw std::runtime_error(ss.str());
 	}
 	
@@ -130,7 +130,7 @@ void Parser::parse() {
 	ast_roots.resize(files.size());
 	
 	for(size_t file_ind = 0; file_ind < files.size(); file_ind++) {
-		const FileInfo &fi = files[file_ind];
+		const FileInfo *fi = files[file_ind].get();
 		
 		load_file(fi);
 		
@@ -248,10 +248,10 @@ std::vector<std::filesystem::path> Parser::gen_cpp(const std::filesystem::path &
 	std::vector<std::filesystem::path> generated_files;
 	
 	for(size_t file_ind = 0; file_ind < files.size(); file_ind++) {
-		const FileInfo &file = files[file_ind];
+		const FileInfo *file = files[file_ind].get();
 		const ASTNode *node = ast_roots[file_ind].get();
 		
-		std::filesystem::path file_path = prefix / file.path.filename().replace_extension("cpp");
+		std::filesystem::path file_path = prefix / file->path.filename().replace_extension("cpp");
 		std::ofstream out(file_path);
 		if(!out.good())
 			throw std::runtime_error("Can't open file for writing: " + quoted_path(file_path));
