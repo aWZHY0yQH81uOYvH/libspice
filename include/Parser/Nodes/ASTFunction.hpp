@@ -20,6 +20,7 @@ protected:
 	std::vector<std::shared_ptr<ASTNode>*> args;
 	bool closed = false;
 	bool expecting_argument = false;
+	bool if_statement = false;
 	
 	void all_to_xpp(FileInfo &fi, bool include_namespace) const;
 	

@@ -14,6 +14,9 @@ ASTExprCurlyBraces::ASTExprCurlyBraces(NodePos pos, std::vector<std::string> &to
 void ASTExprCurlyBraces::verify() const {
 	if(!closed)
 		throw SyntaxException(pos, "Missing matching curly brace");
+	
+	if(!have_content())
+		throw SyntaxException(pos, "Expected expression");
 }
 
 void ASTExprCurlyBraces::all_to_cpp(FileInfo &fi) const {

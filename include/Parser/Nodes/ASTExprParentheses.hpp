@@ -15,6 +15,8 @@ protected:
 	bool closed = false;
 	char closing_char = ')';
 	
+	bool have_content() const;
+	
 public:
 	using ASTEmptyExpression::ASTEmptyExpression;
 	

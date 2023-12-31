@@ -7,9 +7,19 @@ const char * const ASTExprParentheses::regex_str    = "^\\(";
 const int          ASTExprParentheses::regex_flags  = 0;
 const size_t       ASTExprParentheses::regex_groups = 0;
 
+bool ASTExprParentheses::have_content() const {
+	for(auto &child:children)
+		if(dynamic_cast<ASTExpression*>(child.get()))
+			return true;
+	return false;
+}
+
 void ASTExprParentheses::verify() const {
 	if(!closed)
 		throw SyntaxException(pos, "Missing matching parenthesis");
+	
+	if(!have_content())
+		throw SyntaxException(pos, "Expected expression");
 }
 
 void ASTExprParentheses::all_to_cpp(FileInfo &fi) const {
@@ -23,7 +33,7 @@ ASTNode *ASTExprParentheses::consume(ASTNode *&current_node, NodePos &current_po
 	
 	// Mark as closed if we see the closing character
 	// (variable to reduce code duplication when doing curly braces)
-	if(*syntax == closing_char) {
+	if(!closed && *syntax == closing_char) {
 		syntax++;
 		closed = true;
 		return this;

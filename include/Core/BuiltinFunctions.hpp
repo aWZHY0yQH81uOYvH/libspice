@@ -215,24 +215,22 @@ struct builtin {
 	}
 	
 	// 0 if x > .5, else 1
-	static inline template<typename Tx> bool inv(Tx x) {
+	template<typename Tx> static inline bool inv(Tx x) {
 		return !buf(x);
 	}
 	
 	// Adapt boolean behavior to possibly use floating-point arguments (non-standard SPICE functions; used by SPICE translator)
-	static inline template<typename Tx, typename Ty> bool _and(Tx x, Ty y) {
+	template<typename Tx, typename Ty> static inline bool _and(Tx x, Ty y) {
 		return buf(x) && buf(y);
 	}
 	
-	static inline template<typename Tx, typename Ty> bool _or(Tx x, Ty y) {
+	template<typename Tx, typename Ty> static inline bool _or(Tx x, Ty y) {
 		return buf(x) || buf(y);
 	}
 	
-	static inline template<typename Tx, typename Ty> bool _xor(Tx x, Ty y) {
+	template<typename Tx, typename Ty> static inline bool _xor(Tx x, Ty y) {
 		return buf(x) ^ buf(y);
 	}
-	
-	static inline double 
 	
 };
 }
