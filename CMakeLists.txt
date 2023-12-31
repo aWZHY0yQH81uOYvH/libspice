@@ -54,6 +54,7 @@ set(LIB_SOURCES
 	lib/Parser/Nodes/ASTFunction.cpp
 	lib/Parser/Nodes/ASTDotInclude.cpp
 	lib/Parser/Nodes/ASTDotParam.cpp
+	lib/Parser/Nodes/ASTDotFunc.cpp
 )
 
 set(LIB_HEADERS
@@ -89,6 +90,7 @@ set(LIB_HEADERS
 	include/Parser/Nodes/ASTFunction.hpp
 	include/Parser/Nodes/ASTDotInclude.hpp
 	include/Parser/Nodes/ASTDotParam.hpp
+	include/Parser/Nodes/ASTDotFunc.hpp
 	
 	include/SPICE.hpp
 )

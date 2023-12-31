@@ -14,7 +14,7 @@ ASTNode *ASTEmptyExpression::check_match_unary(NodePos &current_pos, const char 
 	ASTNode *node = nullptr;
 	
 	          node = check_match<ASTNumericLiteral >(current_pos, syntax);
-	if(!node) node = check_match<ASTFunction       >(current_pos, syntax);
+	if(!node) node = check_match<ASTFunction<false>>(current_pos, syntax);
 	if(!node) node = check_match<ASTIdentifier     >(current_pos, syntax);
 	if(!node) node = check_match<ASTExprParentheses>(current_pos, syntax);
 	if(!node) node = check_match<ASTExprCurlyBraces>(current_pos, syntax);

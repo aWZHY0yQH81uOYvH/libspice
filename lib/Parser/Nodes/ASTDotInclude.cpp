@@ -20,7 +20,8 @@ void ASTDotInclude::to_hpp(FileInfo &fi) const {
 	std::filesystem::path header_file{file};
 	header_file.replace_extension("hpp");
 	
-	*fi.out << "#include " << Parser::quoted_path(header_file.filename()) << "\n";
+	*fi.out << "#include " << Parser::quoted_path(header_file.filename()) << "\n\n";
+	indent(fi);
 }
 
 bool ASTDotInclude::exit_on_newline() const {

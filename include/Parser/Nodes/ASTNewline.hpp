@@ -16,6 +16,7 @@ public:
 	
 	virtual void to_cpp(FileInfo &fi) const override {
 		*fi.out << '\n';
+		indent(fi);
 	}
 };
 

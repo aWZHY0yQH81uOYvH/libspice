@@ -27,6 +27,7 @@ void ASTDotParam::all_to_cpp(FileInfo &fi) const {
 	// TODO: implement for real
 	
 	ASTNode::all_to_cpp(fi);
+	*fi.out << '\n';
 }
 
 void ASTDotParam::all_to_hpp(FileInfo &fi) const {

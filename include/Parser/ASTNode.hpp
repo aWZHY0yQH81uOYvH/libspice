@@ -46,6 +46,20 @@ struct FileInfo {
 	const FileInfo *included_by;
 	std::ostream *out = nullptr;
 	size_t indent_level = 0;
+	
+	// Class that indents FileInfo on construction and un-indents it on destruction
+	class AutoIndent {
+	private:
+		FileInfo &fi;
+	public:
+		AutoIndent(FileInfo &fi): fi(fi) {
+			fi.indent_level++;
+		}
+		
+		~AutoIndent() {
+			fi.indent_level--;
+		}
+	};
 };
 
 class ASTNode {
@@ -84,6 +98,9 @@ public:
 	// Convert this node and all children to C++ syntax
 	virtual void all_to_cpp(FileInfo &fi) const;
 	virtual void all_to_hpp(FileInfo &fi) const;
+	
+	// Print indent_level number of tabs in a FileInfo
+	static void indent(FileInfo &fi);
 	
 	
 	// Verify syntax validity of just this node; throw exception if not valid

@@ -141,6 +141,8 @@ void Parser::parse() {
 		
 		ASTNode *current_node = root_node;
 		
+		bool last_line_was_comment = false;
+		
 		for(size_t line_n = 0; line_n < lines.size(); line_n++) {
 			const std::string &line = lines[line_n];
 			
@@ -152,7 +154,7 @@ void Parser::parse() {
 			
 			bool new_line = true;
 			
-			while(line_ptr < line_end) {
+			while(line_ptr < line_end && current_node) {
 				np.character = line_ptr - line_start;
 				
 				// Try to consume as much whitespace as possible
@@ -167,18 +169,23 @@ void Parser::parse() {
 					if(comment) {
 						current_node->add_child(comment);
 						current_node->add_child(new ASTNewline); // Include newline
+						last_line_was_comment = true;
 						continue;
 					}
 				}
 				
 				// Handle line continuation + characters
 				if(new_line && *line_ptr == '+') {
-					// Add newline
-					current_node->add_child(new ASTNewline);
+					// Add newline if there wasn't a comment that provided one already
+					if(!last_line_was_comment)
+						current_node->add_child(new ASTNewline);
 					line_ptr++;
 					new_line = false;
+					last_line_was_comment = false;
 					continue;
 				}
+				
+				last_line_was_comment = false;
 				
 				// Check if we are on a new line and one of the parent nodes requires exiting
 				if(new_line) {
@@ -255,7 +262,7 @@ std::vector<std::filesystem::path> Parser::gen_cpp(const std::filesystem::path &
 		cpp_path.replace_extension("cpp");
 		hpp_path.replace_extension("hpp");
 		
-		auto output = [&](const std::filesystem::path &p, const std::function<void(FileInfo&)> &generate) {
+		auto output = [&](const std::filesystem::path &p, bool is_hpp) {
 			std::ofstream out(p);
 			if(!out.good())
 				throw std::runtime_error("Can't open file for writing: " + quoted_path(p));
@@ -263,15 +270,40 @@ std::vector<std::filesystem::path> Parser::gen_cpp(const std::filesystem::path &
 			file->indent_level = 0;
 			file->out = &out;
 			
-			generate(*file);
+			if(is_hpp) {
+				// Always include SPICE.hpp
+				out << "#include <SPICE.hpp>\n\n";
+				
+				// Generate include directives for all necessary files
+				std::unordered_set<std::string> includes;
+				node->all_include_files(includes);
+				
+				for(auto &inc:includes)
+					out << "#include \"" << inc << ".hpp\"\n";
+				
+				if(includes.size())
+					out << '\n';
+				
+				node->all_to_hpp(*file);
+			}
+			
+			else {
+				// Include our builtin functions
+				out << "#include <Core/BuiltinFunctions.hpp>\n";
+				
+				// Include our header
+				out << "#include " << hpp_path.filename() << "\n\n";
+				
+				node->all_to_cpp(*file);
+			}
 			
 			out.close();
 			
 			generated_files.push_back(p);
 		};
 		
-		output(hpp_path, std::bind(&ASTNode::all_to_hpp, node, std::placeholders::_1));
-		output(cpp_path, std::bind(&ASTNode::all_to_cpp, node, std::placeholders::_1));
+		output(hpp_path, true);
+		output(cpp_path, false);
 	}
 	
 	return generated_files;

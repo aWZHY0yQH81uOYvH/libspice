@@ -4,6 +4,7 @@
 #include "Parser/Nodes/ASTNumericLiteral.hpp"
 #include "Parser/Nodes/ASTDotInclude.hpp"
 #include "Parser/Nodes/ASTDotParam.hpp"
+#include "Parser/Nodes/ASTDotFunc.hpp"
 
 #include <cassert>
 #include <unordered_map>
@@ -51,6 +52,12 @@ void ASTNode::all_to_cpp(FileInfo &fi) const {
 void ASTNode::all_to_hpp(FileInfo &fi) const {
 	to_hpp(fi);
 	children_to_hpp(fi);
+}
+
+// Print indent_level number of tabs in a FileInfo
+void ASTNode::indent(FileInfo &fi) {
+	for(size_t x = 0; x < fi.indent_level; x++)
+		*fi.out << '\t';
 }
 
 // Verify syntax validity of just this node; throw exception if not valid
@@ -179,6 +186,7 @@ ASTNode *ASTNode::consume(ASTNode *&current_node, NodePos &current_pos, const ch
 	if(new_line) {
 		AST_CONSUME_ENTER(ASTDotInclude);
 		AST_CONSUME_ENTER(ASTDotParam);
+		AST_CONSUME_ENTER(ASTDotFunc);
 	}
 	
 	return nullptr;
