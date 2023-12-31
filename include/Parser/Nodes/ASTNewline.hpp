@@ -14,8 +14,8 @@ public:
 	using ASTNode::ASTNode;
 	ASTNewline() {}
 	
-	virtual std::string to_cpp() const override {
-		return "\n";
+	virtual void to_cpp(FileInfo &fi) const override {
+		*fi.out << '\n';
 	}
 };
 

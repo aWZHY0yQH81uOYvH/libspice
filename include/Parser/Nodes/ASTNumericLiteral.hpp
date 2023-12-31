@@ -22,7 +22,7 @@ public:
 	
 	void verify() const override;
 	
-	virtual std::string to_cpp() const override;
+	virtual void to_cpp(FileInfo &fi) const override;
 	
 	double get_number() const;
 };

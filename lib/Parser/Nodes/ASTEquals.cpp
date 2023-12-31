@@ -8,8 +8,8 @@ const char * const ASTEquals::regex_str    = "^=";
 const int          ASTEquals::regex_flags  = 0;
 const size_t       ASTEquals::regex_groups = 0;
 
-std::string ASTEquals::to_cpp() const {
-	return " = ";
+void ASTEquals::to_cpp(FileInfo &fi) const {
+	*fi.out << " = ";
 }
 
 }

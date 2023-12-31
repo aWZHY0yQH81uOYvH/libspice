@@ -23,36 +23,34 @@ ASTNode::ASTNode(NodePos pos, std::vector<std::string> &tokens): ASTNode(pos) {
 }
 
 // Convert this node to C++ representation
-std::string ASTNode::to_cpp() const {
-	return "";
+void ASTNode::to_cpp(FileInfo &fi) const {
+	(void)fi;
 }
 
-std::string ASTNode::to_hpp() const {
-	return "";
+void ASTNode::to_hpp(FileInfo &fi) const {
+	(void)fi;
 }
 
 // Convert all children to C++ syntax
-std::string ASTNode::children_to_cpp() const {
-	std::string ret;
+void ASTNode::children_to_cpp(FileInfo &fi) const {
 	for(auto &child:children)
-		ret += child->all_to_cpp();
-	return ret;
+		child->all_to_cpp(fi);
 }
 
-std::string ASTNode::children_to_hpp() const {
-	std::string ret;
+void ASTNode::children_to_hpp(FileInfo &fi) const {
 	for(auto &child:children)
-		ret += child->all_to_hpp();
-	return ret;
+		child->all_to_hpp(fi);
 }
 
 // Convert this node and all children to C++ syntax
-std::string ASTNode::all_to_cpp() const {
-	return to_cpp() + children_to_cpp();
+void ASTNode::all_to_cpp(FileInfo &fi) const {
+	to_cpp(fi);
+	children_to_cpp(fi);
 }
 
-std::string ASTNode::all_to_hpp() const {
-	return to_hpp() + children_to_hpp();
+void ASTNode::all_to_hpp(FileInfo &fi) const {
+	to_hpp(fi);
+	children_to_hpp(fi);
 }
 
 // Verify syntax validity of just this node; throw exception if not valid

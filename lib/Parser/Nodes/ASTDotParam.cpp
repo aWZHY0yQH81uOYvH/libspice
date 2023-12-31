@@ -23,13 +23,13 @@ void ASTDotParam::verify() const {
 		throw SyntaxException((**identifiers.rbegin())->pos, "Expected assignment to identifier");
 }
 
-std::string ASTDotParam::all_to_cpp() const {
+void ASTDotParam::all_to_cpp(FileInfo &fi) const {
 	// TODO: implement for real
 	
-	return ASTNode::all_to_cpp();
+	ASTNode::all_to_cpp(fi);
 }
 
-std::string ASTDotParam::all_to_hpp() const {
+void ASTDotParam::all_to_hpp(FileInfo &fi) const {
 	// TODO
 }
 

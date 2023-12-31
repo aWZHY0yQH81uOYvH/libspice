@@ -12,6 +12,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <functional>
+#include <filesystem>
 
 // Commonly want to just enter a new node on a match in consume()
 // Need ASTNode *node local variable
@@ -36,6 +37,15 @@ public:
 	
 	NodePos pos;
 	std::string error;
+};
+
+// Information about a file
+struct FileInfo {
+	FileInfo(std::filesystem::path path, const FileInfo *included_by = nullptr): path(path), included_by(included_by) {}
+	std::filesystem::path path;
+	const FileInfo *included_by;
+	std::ostream *out = nullptr;
+	size_t indent_level = 0;
 };
 
 class ASTNode {
@@ -64,16 +74,16 @@ public:
 	
 	
 	// Convert this node to C++ representation
-	virtual std::string to_cpp() const;
-	virtual std::string to_hpp() const;
+	virtual void to_cpp(FileInfo &fi) const;
+	virtual void to_hpp(FileInfo &fi) const;
 	
 	// Convert all children to C++ syntax
-	virtual std::string children_to_cpp() const;
-	virtual std::string children_to_hpp() const;
+	virtual void children_to_cpp(FileInfo &fi) const;
+	virtual void children_to_hpp(FileInfo &fi) const;
 	
 	// Convert this node and all children to C++ syntax
-	virtual std::string all_to_cpp() const;
-	virtual std::string all_to_hpp() const;
+	virtual void all_to_cpp(FileInfo &fi) const;
+	virtual void all_to_hpp(FileInfo &fi) const;
 	
 	
 	// Verify syntax validity of just this node; throw exception if not valid

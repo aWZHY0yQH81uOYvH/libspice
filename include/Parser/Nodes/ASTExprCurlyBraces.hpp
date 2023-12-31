@@ -20,7 +20,7 @@ public:
 	
 	virtual void verify() const override;
 	
-	virtual std::string all_to_cpp() const override;
+	virtual void all_to_cpp(FileInfo &fi) const override;
 };
 
 }

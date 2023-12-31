@@ -16,8 +16,10 @@ void ASTExprCurlyBraces::verify() const {
 		throw SyntaxException(pos, "Missing matching curly brace");
 }
 
-std::string ASTExprCurlyBraces::all_to_cpp() const {
-	return "(" + children_to_cpp() + ")";
+void ASTExprCurlyBraces::all_to_cpp(FileInfo &fi) const {
+	*fi.out << '(';
+	children_to_cpp(fi);
+	*fi.out << ')';
 }
 
 }

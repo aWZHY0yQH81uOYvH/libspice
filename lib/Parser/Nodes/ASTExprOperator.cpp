@@ -40,7 +40,7 @@ ASTExprOperator::ASTExprOperator(NodePos pos, std::vector<std::string> &tokens):
 	op_type = (OPType)op_ind;
 }
 
-std::string ASTExprOperator::all_to_cpp() const {
+void ASTExprOperator::all_to_cpp(FileInfo &fi) const {
 	std::string func_name;
 	
 	switch(op_type) {
@@ -64,29 +64,33 @@ std::string ASTExprOperator::all_to_cpp() const {
 			break;
 	}
 	
-	std::string ret;
 	bool got_expr = false;
 	
 	for(auto &child:children) {
 		ASTExpression *expr = dynamic_cast<ASTExpression*>(child.get());
 		if(expr) {
 			if(func_name.length()) {
-				if(got_expr)
-					ret += child->all_to_cpp() + ")";
-				else
-					ret += func_name + "(" + child->all_to_cpp() + ", ";
+				if(got_expr) {
+					child->all_to_cpp(fi);
+					*fi.out << ')';
+				} else {
+					*fi.out << func_name << '(';
+					child->all_to_cpp(fi);
+					*fi.out << ", ";
+				}
 			} else {
-				if(got_expr)
-					ret += op_lut[op_type] + " " + child->all_to_cpp();
-				else
-					ret += child->all_to_cpp() + " ";
+				if(got_expr) {
+					*fi.out << op_lut[op_type] << ' ';
+					child->all_to_cpp(fi);
+				} else {
+					child->all_to_cpp(fi);
+					*fi.out << ' ';
+				}
 			}
 			
 			got_expr = true;
-		} else ret += child->all_to_cpp();
+		} else child->all_to_cpp(fi);
 	}
-	
-	return ret;
 }
 
 ASTExprOperator::OPType ASTExprOperator::get_op_type() const {

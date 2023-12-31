@@ -13,10 +13,9 @@ ASTComment::ASTComment(NodePos pos, std::vector<std::string> &tokens): ASTNode(p
 	text = tokens.at(1);
 }
 
-std::string ASTComment::to_cpp() const {
-	std::string space;
-	if(!start_of_line) space = " ";
-	return space + "//" + text;
+void ASTComment::to_cpp(FileInfo &fi) const {
+	if(!start_of_line) *fi.out << ' ';
+	*fi.out << "//" << text;
 }
 
 }

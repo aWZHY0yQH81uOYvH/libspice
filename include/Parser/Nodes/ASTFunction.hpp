@@ -21,7 +21,7 @@ public:
 	static const int regex_flags;
 	static const size_t regex_groups;
 	
-	virtual std::string all_to_cpp() const override;
+	virtual void all_to_cpp(FileInfo &fi) const override;
 	
 	virtual ASTNode *consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line) override;
 	

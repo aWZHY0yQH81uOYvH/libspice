@@ -24,7 +24,9 @@ public:
 	static const int regex_flags;
 	static const size_t regex_groups;
 	
-	virtual std::string to_hpp() const override;
+	virtual void to_hpp(FileInfo &fi) const override;
+	
+	virtual bool exit_on_newline() const override;
 	
 	const std::string &get_file() const;
 };

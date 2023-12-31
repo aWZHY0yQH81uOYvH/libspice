@@ -39,7 +39,7 @@ public:
 	static const int regex_flags;
 	static const size_t regex_groups;
 	
-	virtual std::string all_to_cpp() const override;
+	virtual void all_to_cpp(FileInfo &fi) const override;
 	
 	OPType get_op_type() const;
 };

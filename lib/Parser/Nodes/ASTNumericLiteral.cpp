@@ -50,10 +50,10 @@ ASTNumericLiteral::ASTNumericLiteral(NodePos pos, std::vector<std::string> &toke
 // Always valid once constructed
 void ASTNumericLiteral::verify() const {}
 
-std::string ASTNumericLiteral::to_cpp() const {
+void ASTNumericLiteral::to_cpp(FileInfo &fi) const {
 	char buf[32];
 	snprintf(buf, 32, "%e", number);
-	return buf;
+	*fi.out << buf;
 }
 
 double ASTNumericLiteral::get_number() const {

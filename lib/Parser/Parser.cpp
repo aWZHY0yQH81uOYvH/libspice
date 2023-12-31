@@ -8,6 +8,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <utility>
+#include <functional>
 #include <cctype>
 
 namespace spice {
@@ -99,6 +100,7 @@ void Parser::load_file(const FileInfo *file) {
 	
 	// Load lines into lines vector
 	std::string line;
+	lines.clear();
 	while(std::getline(fs, line))
 		lines.push_back(std::move(line));
 	
@@ -242,25 +244,34 @@ void Parser::parse() {
 
 // Generate all C++ files
 std::vector<std::filesystem::path> Parser::gen_cpp(const std::filesystem::path &prefix) const {
-	// TODO
-	// Pass through the prefix to .include statement things?
-	
 	std::vector<std::filesystem::path> generated_files;
 	
 	for(size_t file_ind = 0; file_ind < files.size(); file_ind++) {
-		const FileInfo *file = files[file_ind].get();
+		FileInfo *file = files[file_ind].get();
 		const ASTNode *node = ast_roots[file_ind].get();
 		
-		std::filesystem::path file_path = prefix / file->path.filename().replace_extension("cpp");
-		std::ofstream out(file_path);
-		if(!out.good())
-			throw std::runtime_error("Can't open file for writing: " + quoted_path(file_path));
+		std::filesystem::path cpp_path = prefix / file->path.filename();
+		std::filesystem::path hpp_path = cpp_path;
+		cpp_path.replace_extension("cpp");
+		hpp_path.replace_extension("hpp");
 		
-		out << node->all_to_cpp();
+		auto output = [&](const std::filesystem::path &p, const std::function<void(FileInfo&)> &generate) {
+			std::ofstream out(p);
+			if(!out.good())
+				throw std::runtime_error("Can't open file for writing: " + quoted_path(p));
+			
+			file->indent_level = 0;
+			file->out = &out;
+			
+			generate(*file);
+			
+			out.close();
+			
+			generated_files.push_back(p);
+		};
 		
-		out.close();
-		
-		generated_files.push_back(file_path);
+		output(hpp_path, std::bind(&ASTNode::all_to_hpp, node, std::placeholders::_1));
+		output(cpp_path, std::bind(&ASTNode::all_to_cpp, node, std::placeholders::_1));
 	}
 	
 	return generated_files;

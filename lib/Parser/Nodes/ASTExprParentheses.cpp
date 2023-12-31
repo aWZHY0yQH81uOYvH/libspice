@@ -12,8 +12,10 @@ void ASTExprParentheses::verify() const {
 		throw SyntaxException(pos, "Missing matching parenthesis");
 }
 
-std::string ASTExprParentheses::all_to_cpp() const {
-	return "(" + children_to_cpp() + ")";
+void ASTExprParentheses::all_to_cpp(FileInfo &fi) const {
+	*fi.out << '(';
+	children_to_cpp(fi);
+	*fi.out << ')';
 }
 
 ASTNode *ASTExprParentheses::consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line) {

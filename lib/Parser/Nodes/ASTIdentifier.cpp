@@ -14,8 +14,8 @@ ASTIdentifier::ASTIdentifier(NodePos pos, std::vector<std::string> &tokens): AST
 	name = tokens.at(0);
 }
 
-std::string ASTIdentifier::to_cpp() const {
-	return name;
+void ASTIdentifier::to_cpp(FileInfo &fi) const {
+	*fi.out << name;
 }
 
 const std::string &ASTIdentifier::get_name() const {

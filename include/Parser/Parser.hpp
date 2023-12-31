@@ -16,13 +16,6 @@
 namespace spice {
 namespace parser {
 
-// Information about a file
-struct FileInfo {
-	FileInfo(std::filesystem::path path, const FileInfo *included_by = nullptr): path(path), included_by(included_by) {}
-	std::filesystem::path path;
-	const FileInfo *included_by;
-};
-
 class ASTNode;
 
 class Parser {

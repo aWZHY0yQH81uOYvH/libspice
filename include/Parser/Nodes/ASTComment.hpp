@@ -21,7 +21,7 @@ public:
 	static const int regex_flags;
 	static const size_t regex_groups;
 	
-	virtual std::string to_cpp() const override;
+	virtual void to_cpp(FileInfo &fi) const override;
 };
 
 }

@@ -13,11 +13,7 @@ ASTFunction::ASTFunction(NodePos pos, std::vector<std::string> &tokens): ASTExpr
 	name = tokens.at(0);
 }
 
-std::string ASTFunction::all_to_cpp() const {
-	// TODO
-}
-
-ASTNode *ASTFunction::consume(ASTNode *&current_node, NodePos &current_pos, const char *&syntax, bool new_line) {
+void ASTFunction::all_to_cpp(FileInfo &fi) const {
 	// TODO
 }
 
