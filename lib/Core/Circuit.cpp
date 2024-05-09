@@ -526,8 +526,11 @@ void Circuit::sim_to_time(double stop, bool single_step) {
 	if(_dt) *_dt = step;
 }
 
-void Circuit::sim_single_step() {
-	sim_to_time(std::numeric_limits<double>::max(), true);
+void Circuit::sim_single_step(double step_time) {
+	if(step_time >= 0)
+		sim_to_time(t + step_time, true);
+	else
+		sim_to_time(std::numeric_limits<double>::max(), true);
 }
 
 }
