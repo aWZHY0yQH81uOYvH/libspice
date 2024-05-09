@@ -103,6 +103,9 @@ private:
 	// Time step (dynamic, will point into driver object)
 	double *_dt = nullptr;
 	
+	// Hold next timestep that will be tried
+	double next_step;
+	
 	// Timestep limits
 	const double min_ts, max_ts;
 	
