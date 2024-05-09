@@ -11,7 +11,7 @@ find_package(GSL REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 include_directories(
-	./include
+	./lib
 	
 	${GSL_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIRS}
@@ -58,41 +58,41 @@ set(LIB_SOURCES
 )
 
 set(LIB_HEADERS
-	include/Core/Expression.hpp
-	include/Core/Circuit.hpp
-	include/Core/Node.hpp
-	include/Core/Component.hpp
-	include/Core/TwoTerminalComponent.hpp
-	include/Core/IntegratingComponent.hpp
-	include/Core/Modulator.hpp
-	include/Core/BuiltinFunctions.hpp
+	lib/Core/Expression.hpp
+	lib/Core/Circuit.hpp
+	lib/Core/Node.hpp
+	lib/Core/Component.hpp
+	lib/Core/TwoTerminalComponent.hpp
+	lib/Core/IntegratingComponent.hpp
+	lib/Core/Modulator.hpp
+	lib/Core/BuiltinFunctions.hpp
 	
-	include/Component/VSource.hpp
-	include/Component/ISource.hpp
-	include/Component/Resistor.hpp
-	include/Component/Capacitor.hpp
-	include/Component/Inductor.hpp
+	lib/Component/VSource.hpp
+	lib/Component/ISource.hpp
+	lib/Component/Resistor.hpp
+	lib/Component/Capacitor.hpp
+	lib/Component/Inductor.hpp
 	
-	include/Modulator/PWM.hpp
-	include/Modulator/Sine.hpp
+	lib/Modulator/PWM.hpp
+	lib/Modulator/Sine.hpp
 	
-	include/Parser/Parser.hpp
-	include/Parser/ASTNode.hpp
-	include/Parser/Nodes/ASTNewline.hpp
-	include/Parser/Nodes/ASTComment.hpp
-	include/Parser/Nodes/ASTEquals.hpp
-	include/Parser/Nodes/ASTNumericLiteral.hpp
-	include/Parser/Nodes/ASTIdentifier.hpp
-	include/Parser/Nodes/ASTExpression.hpp
-	include/Parser/Nodes/ASTExprParentheses.hpp
-	include/Parser/Nodes/ASTExprCurlyBraces.hpp
-	include/Parser/Nodes/ASTExprOperator.hpp
-	include/Parser/Nodes/ASTFunction.hpp
-	include/Parser/Nodes/ASTDotInclude.hpp
-	include/Parser/Nodes/ASTDotParam.hpp
-	include/Parser/Nodes/ASTDotFunc.hpp
+	lib/Parser/Parser.hpp
+	lib/Parser/ASTNode.hpp
+	lib/Parser/Nodes/ASTNewline.hpp
+	lib/Parser/Nodes/ASTComment.hpp
+	lib/Parser/Nodes/ASTEquals.hpp
+	lib/Parser/Nodes/ASTNumericLiteral.hpp
+	lib/Parser/Nodes/ASTIdentifier.hpp
+	lib/Parser/Nodes/ASTExpression.hpp
+	lib/Parser/Nodes/ASTExprParentheses.hpp
+	lib/Parser/Nodes/ASTExprCurlyBraces.hpp
+	lib/Parser/Nodes/ASTExprOperator.hpp
+	lib/Parser/Nodes/ASTFunction.hpp
+	lib/Parser/Nodes/ASTDotInclude.hpp
+	lib/Parser/Nodes/ASTDotParam.hpp
+	lib/Parser/Nodes/ASTDotFunc.hpp
 	
-	include/SPICE.hpp
+	lib/SPICE.hpp
 )
 
 # Main library
@@ -104,7 +104,7 @@ add_library(spice SHARED
 target_sources(spice PUBLIC
 	FILE_SET headers
 	TYPE HEADERS
-	BASE_DIRS include
+	BASE_DIRS lib
 	FILES "${LIB_HEADERS}"
 )
 
