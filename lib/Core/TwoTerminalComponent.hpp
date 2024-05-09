@@ -49,7 +49,8 @@ protected:
 	std::vector<double> _i_hist;
 	
 	// Constructors
-	TwoTerminalComponent(Circuit *parent, double value);
+	TwoTerminalComponent(Circuit *parent, double value = 0);
+	TwoTerminalComponent(Circuit *parent, Node *top, Node *bottom);
 	TwoTerminalComponent(Circuit *parent, double value, Node *top, Node *bottom);
 	TwoTerminalComponent(Circuit *parent, Modulator *m, int flags = 0);
 	TwoTerminalComponent(Circuit *parent, Modulator *m, Node *top, Node *bottom);
@@ -87,6 +88,10 @@ public:
 	Node *to(Node *n);
 	TwoTerminalComponent *to(TwoTerminalComponent *c);
 	void flip();
+	
+	// Return connected nodes
+	Node *top() const;
+	Node *bot() const;
 	
 	friend class Circuit;
 	friend class Node;

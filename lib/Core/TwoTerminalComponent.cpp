@@ -9,6 +9,10 @@ namespace spice {
 
 TwoTerminalComponent::TwoTerminalComponent(Circuit *c, double v): Component(c), value(v) {}
 
+TwoTerminalComponent::TwoTerminalComponent(Circuit *c, Node *top, Node *bottom): TwoTerminalComponent(c, 0.0) {
+	top->to(this)->to(bottom);
+}
+
 TwoTerminalComponent::TwoTerminalComponent(Circuit *c, double v, Node *top, Node *bottom): TwoTerminalComponent(c, v) {
 	top->to(this)->to(bottom);
 }
@@ -170,6 +174,14 @@ void TwoTerminalComponent::flip() {
 
 	if(node_top)
 		node_top->connections[this] ^= 1;
+}
+
+Node *TwoTerminalComponent::top() const {
+	return node_top;
+}
+
+Node *TwoTerminalComponent::bot() const {
+	return node_bot;
 }
 
 }
