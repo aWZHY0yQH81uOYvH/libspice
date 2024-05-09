@@ -143,6 +143,9 @@ public:
 	Node *add_node();
 	Node *add_node(double v);
 	
+	// Get or create ground node (a node fixed at 0V)
+	Node *get_gnd_node();
+	
 	// Create new components
 	// (define here so templates can be created on demand)
 	template<typename T, typename... Args> T *add_comp(Args&&... args) {

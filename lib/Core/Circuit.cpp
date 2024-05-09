@@ -33,8 +33,23 @@ Node *Circuit::add_node() {
 }
 
 Node *Circuit::add_node(double v) {
+	// Return existing GND node if already created
+	if(v == 0)
+		return get_gnd_node();
+	
 	topology_changed();
 	Node *n = new Node{this, v};
+	nodes.emplace_back(n);
+	return n;
+}
+
+Node *Circuit::get_gnd_node() {
+	for(auto &node:nodes)
+		if(node->fixed && node->fixed_voltage == 0)
+			return node.get();
+	
+	topology_changed();
+	Node *n = new Node{this, 0};
 	nodes.emplace_back(n);
 	return n;
 }
