@@ -5,6 +5,7 @@
 #pragma once
 
 #include <functional>
+#include <vector>
 
 namespace spice {
 
